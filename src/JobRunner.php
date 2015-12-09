@@ -117,8 +117,6 @@ class JobRunner
 				{
 					$job = new $job_name($this->logger);
 
-					echo 'hel' .PHP_EOL;
-
 					// Another sanity check
 					if ($job instanceof Job)
 					{
