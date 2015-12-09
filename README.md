@@ -3,9 +3,9 @@ A library to make runnable jobs with PHP easy. The library also supports creatin
 
 ## Usage
 Create your jobs and extend ``Job`` or ``ForkingJob`` for work that will need to be in forked processes.
-Instantiate ``CronDaemon`` and execute the ``run()`` method in a loop to daemonize the process.
+Instantiate ``JobRunner`` and execute the ``run()`` method in a loop to daemonize the process.
 
-See examples in the ``examples`` folder by running ``php crondaemon.php``.
+See examples in the ``examples`` folder by running ``php jobrunner.php``.
 
 ## Setting options
 -   Override the ``__construct`` in your class extending ``Job`` to set your own settings:
