@@ -183,4 +183,68 @@ class CronDaemon
 	{
 		$module->setLastRunTime(time());
 	}
+
+	/**
+	 * @return array
+	 */
+	public function getModules()
+	{
+		return $this->modules;
+	}
+
+	/**
+	 * @param array $modules
+	 */
+	public function setModules($modules)
+	{
+		$this->modules = $modules;
+	}
+
+	/**
+	 * @return null|LoggerInterface|NullLogger
+	 */
+	public function getLogger()
+	{
+		return $this->logger;
+	}
+
+	/**
+	 * @param null|LoggerInterface|NullLogger $logger
+	 */
+	public function setLogger($logger)
+	{
+		$this->logger = $logger;
+	}
+
+	/**
+	 * @return \fork_daemon|null
+	 */
+	public function getForkDaemon()
+	{
+		return $this->fork_daemon;
+	}
+
+	/**
+	 * @param \fork_daemon|null $fork_daemon
+	 */
+	public function setForkDaemon($fork_daemon)
+	{
+		$this->fork_daemon = $fork_daemon;
+	}
+
+	/**
+	 * @return CronDaemonConfig
+	 */
+	public function getConfig()
+	{
+		return $this->config;
+	}
+
+	/**
+	 * @param CronDaemonConfig $config
+	 */
+	public function setConfig($config)
+	{
+		$this->config = $config;
+	}
 }

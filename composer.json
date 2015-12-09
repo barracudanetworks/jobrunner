@@ -1,5 +1,5 @@
 {
-  "name": "barracuda/crondaemon-php",
+  "name": "barracudanetworks/crondaemon-php",
   "type": "library",
   "description": "A library to create cron jobs in PHP.",
   "keywords": ["cron", "daemons", "php"],
