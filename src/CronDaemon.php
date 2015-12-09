@@ -154,7 +154,7 @@ class CronDaemon
 	 * @param Module $module
 	 * @return bool
 	 */
-	private function canModuleRun(Module $module)
+	protected function canModuleRun(Module $module)
 	{
 		if ($module->getState() == ModuleConstants::MODULE_NO_START)
 		{
@@ -179,7 +179,7 @@ class CronDaemon
 	/**
 	 * @param Module $module
 	 */
-	private function updateModuleLastRunTime(Module $module)
+	protected function updateModuleLastRunTime(Module $module)
 	{
 		$module->setLastRunTime(time());
 	}
