@@ -30,7 +30,7 @@ class ForkingComplimenter extends ForkingModule
 		return array('You have ' . $this->currentPointer . ' friends!');
 	}
 
-	public function processWork($work)
+	public function processWork(array $work)
 	{
 		$compliments = $work[0];
 

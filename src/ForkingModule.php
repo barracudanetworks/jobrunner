@@ -51,7 +51,7 @@ abstract class ForkingModule extends Module implements ForkingModuleInterface
 
 	abstract protected function createWork($workUnitsCount);
 
-	abstract public function processWork($work);
+	abstract public function processWork(array $work);
 
 	abstract protected function trackProcessedWork($workUnitsCount);
 
