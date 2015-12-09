@@ -181,6 +181,6 @@ class CronDaemon
 	 */
 	private function updateModuleLastRunTime(Module $module)
 	{
-		$module->setLastRunTime(strtotime(time()));
+		$module->setLastRunTime(time());
 	}
 }

@@ -13,6 +13,7 @@
   "autoload": {
     "psr-4": {
       "Barracuda\\CronDaemon\\": "src",
+      "Barracuda\\CronDaemon\\Examples\\": "examples",
       "Barracuda\\CronDaemon\\Tests\\": "tests/src"
     }
   }

@@ -15,10 +15,8 @@ class Complainer extends Module
 		$this->setRunInterval(3);
 	}
 
-
 	public function start()
 	{
 		echo 'I am hungry!' . PHP_EOL;
 	}
-
 }

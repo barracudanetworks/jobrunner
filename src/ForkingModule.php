@@ -6,6 +6,9 @@ use Psr\Log\LoggerInterface;
 
 abstract class ForkingModule extends Module implements ForkingModuleInterface
 {
+	/**
+	 * @var \fork_daemon
+	 */
 	private $fork_daemon;
 
 	private $numChildren;
