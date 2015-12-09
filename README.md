@@ -1,6 +1,5 @@
-# PHP Cron Daemon
-A library to make cron jobs with PHP easy. The library also supports creating jobs that have children backed by our
-PHP Fork Daemon.
+# PHP Job Runner
+A library to make runnable jobs with PHP easy. The library also supports creating jobs that have children backed by our PHP Fork Daemon.
 
 ## Usage
 Create your jobs and extend ``Job`` or ``ForkingJob`` for work that will need to be in forked processes.
