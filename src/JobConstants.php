@@ -1,9 +1,9 @@
 <?php
 
-namespace Barracuda\CronDaemon;
+namespace Barracuda\JobRunner;
 
 
-interface ModuleConstants
+interface JobConstants
 {
 	const MODULE_INACTIVE = 0;
 	const MODULE_RUNNING = 1;

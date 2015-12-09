@@ -1,10 +1,10 @@
 <?php
 
-namespace Barracuda\CronDaemon;
+namespace Barracuda\JobRunner;
 
 use \Psr\Log\LoggerInterface as Log;
 
-interface ModuleInterface
+interface JobInterface
 {
 	function __construct(Log $logger);
 

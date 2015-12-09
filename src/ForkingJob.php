@@ -1,10 +1,10 @@
 <?php
 
-namespace Barracuda\CronDaemon;
+namespace Barracuda\JobRunner;
 
 use Psr\Log\LoggerInterface;
 
-abstract class ForkingModule extends Module implements ForkingModuleInterface
+abstract class ForkingJob extends Job implements ForkingJobInterface
 {
 	/**
 	 * @var \fork_daemon

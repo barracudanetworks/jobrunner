@@ -1,12 +1,12 @@
 <?php
 
-namespace Barracuda\CronDaemon\Examples;
+namespace Barracuda\JobRunner\Examples;
 
 
-use Barracuda\CronDaemon\ForkingModule;
+use Barracuda\JobRunner\ForkingJob;
 use Psr\Log\LoggerInterface;
 
-class ForkingComplimenter extends ForkingModule
+class ForkingComplimenter extends ForkingJob
 {
 	private $noMoreWork = false;
 	private $currentPointer = 0;

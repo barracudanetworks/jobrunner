@@ -1,9 +1,9 @@
 <?php
 
-namespace Barracuda\CronDaemon;
+namespace Barracuda\JobRunner;
 
 
-class CronDaemonConfig
+class JobRunnerConfig
 {
 	private $psr4Path;
 

@@ -1,15 +1,14 @@
 <?php
 
-namespace Barracuda\CronDaemon;
+namespace Barracuda\JobRunner;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 /**
  * Class Module
- * @package Barracuda\Backup\Cloud\Workerd\Config
  */
-abstract class Module implements ModuleInterface
+abstract class Job implements JobInterface
 {
 	/**
 	 * @var null|LoggerInterface|NullLogger
@@ -17,7 +16,7 @@ abstract class Module implements ModuleInterface
 	protected $logger;
 
 	/**
-	 * @var State of the module, e.g. RUNNING/INACTIVE
+	 * @var bool State of the module, e.g. RUNNING/INACTIVE
 	 */
 	private $state;
 

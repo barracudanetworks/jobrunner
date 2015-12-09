@@ -1,12 +1,12 @@
 <?php
 
-namespace Barracuda\CronDaemon\Examples;
+namespace Barracuda\JobRunner\Examples;
 
 
-use Barracuda\CronDaemon\Module;
+use Barracuda\JobRunner\Job;
 use Psr\Log\LoggerInterface;
 
-class Complainer extends Module
+class Complainer extends Job
 {
 	public function __construct(LoggerInterface $logger = null)
 	{

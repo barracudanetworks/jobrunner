@@ -1,9 +1,9 @@
 <?php
 
-namespace Barracuda\CronDaemon;
+namespace Barracuda\JobRunner;
 
 
-interface ForkingModuleInterface extends ModuleInterface
+interface ForkingJobInterface extends JobInterface
 {
 	public function setNumChildren($numChildren);
 

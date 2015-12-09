@@ -1,9 +1,9 @@
 {
-  "name": "barracudanetworks/crondaemon-php",
+  "name": "barracudanetworks/jobrunner",
   "type": "library",
-  "description": "A library to create cron jobs in PHP.",
+  "description": "A library to create and run jobs in PHP.",
   "keywords": ["cron", "daemons", "php"],
-  "homepage": "https://github.com/barracudanetworks/crondaemon-php",
+  "homepage": "https://github.com/barracudanetworks/jobrunner",
   "license": "MIT",
   "require": {
     "php": ">=5.3.0",
@@ -12,8 +12,8 @@
   },
   "autoload": {
     "psr-4": {
-      "Barracuda\\CronDaemon\\": "src",
-      "Barracuda\\CronDaemon\\Examples\\": "examples"
+      "Barracuda\\JobRunner\\": "src",
+      "Barracuda\\JobRunner\\Examples\\": "examples"
     }
   }
 }
