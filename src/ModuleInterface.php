@@ -22,14 +22,6 @@ interface ModuleInterface
 
 	public function setRunInterval($runInterval);
 
-	public function getNetclientModule();
-
-	public function setNetclientModule($netclientModule);
-
-	public function getTicketIdDecommission();
-
-	public function setTicketIdDecommission($ticketIdDecommission);
-
 	public function getMaxRuntime();
 
 	public function setMaxRuntime($maxRuntime);

@@ -32,16 +32,6 @@ abstract class Module implements ModuleInterface
 	private $runInterval;
 
 	/**
-	 * @var
-	 */
-	private $netclientModule;
-
-	/**
-	 * @var
-	 */
-	private $ticketIdDecommission;
-
-	/**
 	 * @var The max time the module should run
 	 */
 	private $maxRuntime;
@@ -111,38 +101,6 @@ abstract class Module implements ModuleInterface
 	public function setRunInterval($runInterval)
 	{
 		$this->runInterval = $runInterval;
-	}
-
-	/**
-	 * @return int
-	 */
-	public function getNetclientModule()
-	{
-		return $this->netclientModule;
-	}
-
-	/**
-	 * @param $netclientModule
-	 */
-	public function setNetclientModule($netclientModule)
-	{
-		$this->netclientModule = $netclientModule;
-	}
-
-	/**
-	 * @return int
-	 */
-	public function getTicketIdDecommission()
-	{
-		return $this->ticketIdDecommission;
-	}
-
-	/**
-	 * @param $ticketIdDecommission
-	 */
-	public function setTicketIdDecommission($ticketIdDecommission)
-	{
-		$this->ticketIdDecommission = $ticketIdDecommission;
 	}
 
 	/**
