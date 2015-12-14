@@ -1,6 +1,17 @@
 # PHP Job Runner
 A library to make runnable jobs with PHP easy. The library also supports creating jobs that have children backed by our PHP Fork Daemon.
 
+#Installation
+You will need to add the following to your composer.json file (merging them with the existing section as needed)
+
+```javascript
+{
+    "require": {
+        "barracudanetworks/jobrunner": "dev-master"
+    }
+}
+```
+
 ## Usage
 Create your jobs and extend ``Job`` or ``ForkingJob`` for work that will need to be in forked processes.
 Instantiate ``JobRunner`` and execute the ``run()`` method in a loop to daemonize the process.
