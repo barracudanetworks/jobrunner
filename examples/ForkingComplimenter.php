@@ -18,7 +18,7 @@ class ForkingComplimenter extends ForkingJob
 		$this->setRunInterval(5);
 	}
 
-	protected function createWork($workUnitsCount)
+	public function createWork($workUnitsCount)
 	{
 		if ($this->noMoreWork)
 		{
@@ -42,7 +42,7 @@ class ForkingComplimenter extends ForkingJob
 		}
 	}
 
-	protected function trackProcessedWork($workUnitsCount)
+	public function trackProcessedWork($workUnitsCount)
 	{
 		$this->currentPointer += $workUnitsCount;
 

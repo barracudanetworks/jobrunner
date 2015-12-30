@@ -49,11 +49,11 @@ abstract class ForkingJob extends Job implements ForkingJobInterface
 		$this->fork_daemon->max_work_per_child_set(1);
 	}
 
-	abstract protected function createWork($workUnitsCount);
+	abstract public function createWork($workUnitsCount);
 
 	abstract public function processWork(array $work);
 
-	abstract protected function trackProcessedWork($workUnitsCount);
+	abstract public function trackProcessedWork($workUnitsCount);
 
 	abstract public function cleanUp();
 
