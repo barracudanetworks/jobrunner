@@ -21,17 +21,22 @@ abstract class Job implements JobInterface
 	private $state;
 
 	/**
-	 * @var The last time the module ran
+	 * @var int The last time the module ran
 	 */
 	private $lastRunTime;
 
 	/**
-	 * @var How often the module should run, e.g. every 6 hours
+	 * @var string When to run the job
+	 */
+	private $runAt;
+
+	/**
+	 * @var int How often the module should run, e.g. every 6 hours
 	 */
 	private $runInterval;
 
 	/**
-	 * @var The max time the module should run
+	 * @var int The max time the module should run
 	 */
 	private $maxRuntime;
 
@@ -84,6 +89,22 @@ abstract class Job implements JobInterface
 	public function setLastRunTime($lastRunTime)
 	{
 		$this->lastRunTime = $lastRunTime;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getRunAt()
+	{
+		return $this->runAt;
+	}
+
+	/**
+	 * @param int $runAt
+	 */
+	public function setRunAt($runAt)
+	{
+		$this->runAt = $runAt;
 	}
 
 	/**

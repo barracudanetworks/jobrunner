@@ -162,6 +162,35 @@ class JobRunner
 		}
 
 		$lastRunTime = $job->getLastRunTime();
+
+		// If the job is supposed to run at a scheduled time
+		$timeSchedule = $job->getRunAt();
+		if ($timeSchedule != null)
+		{
+			$currentTime = new \DateTime();
+			if ($lastRunTime != null)
+			{
+				$lastRun = new \DateTime();
+				$lastRun = $lastRun->setTimestamp($lastRunTime);
+
+				$difference = $lastRun->diff($currentTime);
+
+				// If the last time this ran is the same as the current time, don't let this job run.
+				if ($difference->h == 0 && $difference->i == 0)
+				{
+					return false;
+				}
+			}
+
+			$currentTimeHoursMinutes = $currentTime->format('H:i');
+			if ($currentTimeHoursMinutes == $timeSchedule)
+			{
+				return true;
+			}
+			return false;
+		}
+
+		// If there is no lastRunTime set, it means we are running for the first time, so return true.
 		if ($lastRunTime == null)
 		{
 			return true;
@@ -173,7 +202,6 @@ class JobRunner
 		}
 
 		return false;
-
 	}
 
 	/**

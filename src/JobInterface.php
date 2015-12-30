@@ -18,6 +18,10 @@ interface JobInterface
 
 	public function setLastRunTime($lastRunTime);
 
+	public function getRunAt();
+
+	public function setRunAt($runAt);
+
 	public function getRunInterval();
 
 	public function setRunInterval($runInterval);
