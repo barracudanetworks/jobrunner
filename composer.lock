@@ -9,16 +9,16 @@
     "packages": [
         {
             "name": "barracudanetworks/forkdaemon-php",
-            "version": "v1.0.6",
+            "version": "v1.0.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/barracudanetworks/forkdaemon-php.git",
-                "reference": "1251138c17fe0fc76e87a991a3dbf2de022589db"
+                "reference": "9f9402909a4bd1ac98e5aacb6f15f19056f591f6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/barracudanetworks/forkdaemon-php/zipball/1251138c17fe0fc76e87a991a3dbf2de022589db",
-                "reference": "1251138c17fe0fc76e87a991a3dbf2de022589db",
+                "url": "https://api.github.com/repos/barracudanetworks/forkdaemon-php/zipball/9f9402909a4bd1ac98e5aacb6f15f19056f591f6",
+                "reference": "9f9402909a4bd1ac98e5aacb6f15f19056f591f6",
                 "shasum": ""
             },
             "require": {
@@ -41,7 +41,7 @@
                 "forking",
                 "php"
             ],
-            "time": "2015-11-11 16:17:56"
+            "time": "2016-01-12 19:40:56"
         },
         {
             "name": "psr/log",

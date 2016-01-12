@@ -66,7 +66,6 @@ class JobRunner
 				$job_name = $job->getShortName();
 				if ($this->canJobRun($job))
 				{
-					$this->updateJobLastRunTime($job);
 					$this->fork_daemon->addwork(array($job), "$job_name", $job->getShortName());
 					$this->fork_daemon->process_work(false, $job->getShortName());
 				}
@@ -146,6 +145,7 @@ class JobRunner
 			$this->fork_daemon->add_bucket($job_name);
 			$this->fork_daemon->max_children_set(1, $job_name);
 			$this->fork_daemon->register_child_run(array($this, 'processWork'), $job_name);
+			$this->fork_daemon->register_parent_child_exit(array($this, 'parentChildExit'), $job_name);
 			$this->fork_daemon->child_max_run_time_set($job->getMaxRuntime(), $job_name);
 		}
 	}
@@ -202,6 +202,18 @@ class JobRunner
 		}
 
 		return false;
+	}
+
+	/**
+	 * Update the last run time of the job after it is finished.
+	 *
+	 * @param int $pid The pid of the child exiting.
+	 */
+	public function parentChildExit($pid)
+	{
+		$bucket = $this->fork_daemon->getForkedChildren()[$pid]['bucket'];
+		$job = $this->jobs[$bucket];
+		$this->updateJobLastRunTime($job);
 	}
 
 	/**
