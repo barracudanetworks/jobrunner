@@ -9,15 +9,19 @@ class JobRunnerConfig
 
 	private $dirPath;
 
+	private $jobName;
+
 	/**
 	 * CronDaemonConfig constructor.
 	 * @param $psr4Path
 	 * @param $dirPath
+	 * @param $jobName
 	 */
-	public function __construct($psr4Path, $dirPath)
+	public function __construct($psr4Path, $dirPath, $jobName = null)
 	{
 		$this->psr4Path = $psr4Path;
 		$this->dirPath = $dirPath;
+		$this->jobName = $jobName;
 	}
 
 	/**
@@ -50,5 +54,21 @@ class JobRunnerConfig
 	public function setDirPath($dirPath)
 	{
 		$this->dirPath = $dirPath;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getJobName()
+	{
+		return $this->jobName;
+	}
+
+	/**
+	 * @param string $jobName
+	 */
+	public function setJobName($jobName)
+	{
+		$this->jobName = $jobName;
 	}
 }

@@ -71,6 +71,7 @@ class JobRunner
 				}
 			}
 		}
+		throw new JobRunnerFinishedException('No more jobs to do. Stopping JobRunner');
 	}
 
 	/**
@@ -102,6 +103,14 @@ class JobRunner
 		$path = $this->config->getDirPath();
 		$psr4Path = $this->config->getPsr4Path();
 
+		// If jobName is set in the config, we are only going to run that job. Good for dev testing.
+		if ($this->config->getJobName() !== null)
+		{
+			$job_name = $psr4Path . $this->config->getJobName();
+			$job_list = $this->instantiateJob($job_name, $job_list);
+			return $job_list;
+		}
+
 		$dir_handle = opendir($path);
 
 		while (false !== ($filename = readdir($dir_handle)))
@@ -111,27 +120,35 @@ class JobRunner
 				$this->logger->info("Found job file '" . basename($filename) . "'");
 
 				$job_name = $psr4Path . substr(basename($filename), 0, strlen(basename($filename)) - 4);
-				// instantiate the job class
-				if (is_subclass_of($job_name, 'Barracuda\\JobRunner\\Job'))
-				{
-					$job = new $job_name($this->logger);
-
-					// Another sanity check
-					if ($job instanceof Job)
-					{
-						$job_list[$job->getShortName()] = $job;
-					}
-					else
-					{
-						$this->logger->info($job_name . ' is not an instance of Job, skipping.');
-					}
-				}
-
+				$job_list = $this->instantiateJob($job_name, $job_list);
 			}
 		}
 
 		closedir($dir_handle);
 
+		return $job_list;
+	}
+
+	private function instantiateJob($job_name, $job_list)
+	{
+		if (is_subclass_of($job_name, 'Barracuda\\JobRunner\\Job'))
+		{
+			$job = new $job_name($this->logger);
+
+			// Another sanity check
+			if ($job instanceof Job)
+			{
+				$job_list[$job->getShortName()] = $job;
+			}
+			else
+			{
+				$this->logger->info($job_name . ' is not an instance of Job, skipping.');
+			}
+		}
+		else
+		{
+			$this->logger->info($job_name . ' is not an instance of Job, skipping.');
+		}
 		return $job_list;
 	}
 
