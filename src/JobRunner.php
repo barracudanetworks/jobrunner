@@ -129,26 +129,27 @@ class JobRunner
 		return $job_list;
 	}
 
-	private function instantiateJob($job_name, $job_list)
+	/**
+	 * Instantiates a job class (if it's indeed a job), and adds it to the
+	 * provided job list.
+	 *
+	 * @param string $job_name The fully qualified path to the class.
+	 * @param array  $job_list Array of jobs already instantiated.
+	 * @return array Updated $job_list.
+	 */
+	protected function instantiateJob($job_name, array $job_list)
 	{
 		if (is_subclass_of($job_name, 'Barracuda\\JobRunner\\Job'))
 		{
 			$job = new $job_name($this->logger);
 
-			// Another sanity check
-			if ($job instanceof Job)
-			{
-				$job_list[$job->getShortName()] = $job;
-			}
-			else
-			{
-				$this->logger->info($job_name . ' is not an instance of Job, skipping.');
-			}
+			$job_list[$job->getShortName()] = $job;
 		}
 		else
 		{
-			$this->logger->info($job_name . ' is not an instance of Job, skipping.');
+			$this->logger->warning($job_name . ' is not a subclass of Job, skipping.');
 		}
+
 		return $job_list;
 	}
 
