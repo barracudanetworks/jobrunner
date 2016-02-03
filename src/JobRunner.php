@@ -10,22 +10,22 @@ class JobRunner
 	/**
 	 * @var array
 	 */
-	protected $jobs = array();
+	private $jobs = array();
 
 	/**
 	 * @var LoggerInterface
 	 */
-	protected $logger;
+	private $logger;
 
 	/**
 	 * @var \fork_daemon
 	 */
-	protected $fork_daemon;
+	private $fork_daemon;
 
 	/**
 	 * @var JobRunnerConfig
 	 */
-	protected $config;
+	private $config;
 
 	/**
 	 * @param JobRunnerConfig $config      JobRunner config object.
@@ -68,17 +68,19 @@ class JobRunner
 	{
 		foreach ($this->jobs as $job)
 		{
-			$workRunning = $this->fork_daemon->work_running($job->getShortName());
+			$name = $job->getShortName();
+
+			$workRunning = $this->fork_daemon->work_running($name);
 			if (count($workRunning) == 0)
 			{
-				$job_name = $job->getShortName();
 				if ($this->canJobRun($job))
 				{
-					$this->fork_daemon->addwork(array($job), "$job_name", $job->getShortName());
-					$this->fork_daemon->process_work(false, $job->getShortName());
+					$this->fork_daemon->addwork(array($job), $name, $name);
+					$this->fork_daemon->process_work(false, $name);
 				}
 			}
 		}
+
 		throw new JobRunnerFinishedException('No more jobs to do. Stopping JobRunner');
 	}
 
