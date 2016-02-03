@@ -10,29 +10,33 @@ class JobRunner
 	/**
 	 * @var array
 	 */
-	private $jobs = array();
+	protected $jobs = array();
 
 	/**
-	 * @var null|LoggerInterface|NullLogger
+	 * @var LoggerInterface
 	 */
-	private $logger;
+	protected $logger;
 
 	/**
-	 * @var \fork_daemon|null
+	 * @var \fork_daemon
 	 */
-	private $fork_daemon;
+	protected $fork_daemon;
 
 	/**
 	 * @var JobRunnerConfig
 	 */
-	private $config;
+	protected $config;
 
 	/**
-	 * @param JobRunnerConfig $config
-	 * @param \fork_daemon|null $fork_daemon
-	 * @param LoggerInterface|null $logger
+	 * @param JobRunnerConfig $config      JobRunner config object.
+	 * @param \fork_daemon    $fork_daemon Instance of ForkDaemon.
+	 * @param LoggerInterface $logger      Optionally, a logger.
 	 */
-	public function __construct(JobRunnerConfig $config, \fork_daemon $fork_daemon = null, LoggerInterface $logger = null)
+	public function __construct(
+		JobRunnerConfig $config,
+		\fork_daemon $fork_daemon = null,
+		LoggerInterface $logger = null
+	)
 	{
 		// set up a default logger if one was not passed
 		if ($logger === null)
@@ -54,7 +58,11 @@ class JobRunner
 	}
 
 	/**
-	 * This is the main function that will run jobs, should be called from a while loop
+	 * This is the main function that will run jobs. It should be called in the
+	 * main event loop.
+	 *
+	 * @throws JobRunnerFinishedException When the jobs array is empty.
+	 * @return void
 	 */
 	public function run()
 	{
@@ -75,7 +83,10 @@ class JobRunner
 	}
 
 	/**
-	 * @param array $job Fork daemon can only add work as an array, so this should have 1 item in it - the job object passed from the run() function
+	 * @param array $job Fork daemon can only add work as an array, so this
+	 *                   should have 1 item in it - the job object passed
+	 *                   from the run() function.
+	 * @return void
 	 */
 	public function processWork(array $job)
 	{
@@ -154,7 +165,10 @@ class JobRunner
 	}
 
 	/**
-	 * This function creates a bucket for each job in fork daemon so it is easier to manage if it should run or not
+	 * This function creates a bucket for each job in fork daemon so it is
+	 * easier to manage if it should run or not.
+	 *
+	 * @return void
 	 */
 	private function createJobBuckets()
 	{
@@ -169,7 +183,9 @@ class JobRunner
 	}
 
 	/**
-	 * @param Job $job
+	 * Returns true if a job can run, false otherwise.
+	 *
+	 * @param Job $job The job to check.
 	 * @return bool
 	 */
 	protected function canJobRun(Job $job)
@@ -226,6 +242,7 @@ class JobRunner
 	 * Update the last run time of the job after it is finished.
 	 *
 	 * @param int $pid The pid of the child exiting.
+	 * @return void
 	 */
 	public function parentChildExit($pid)
 	{
@@ -235,7 +252,10 @@ class JobRunner
 	}
 
 	/**
-	 * @param Job $job
+	 * Updates a given job's last runtime to now.
+	 *
+	 * @param Job $job The job to update.
+	 * @return void
 	 */
 	protected function updateJobLastRunTime(Job $job)
 	{
@@ -243,6 +263,7 @@ class JobRunner
 	}
 
 	/**
+	 * Returns all jobs.
 	 * @return array
 	 */
 	public function getJobs()
@@ -251,15 +272,17 @@ class JobRunner
 	}
 
 	/**
-	 * @param array $jobs
+	 * Sets the jobs array.
+	 * @param array $jobs New list of jobs.
+	 * @return void
 	 */
-	public function setJobs($jobs)
+	public function setJobs(array $jobs)
 	{
 		$this->jobs = $jobs;
 	}
 
 	/**
-	 * @return null|LoggerInterface|NullLogger
+	 * @return LoggerInterface
 	 */
 	public function getLogger()
 	{
@@ -267,15 +290,16 @@ class JobRunner
 	}
 
 	/**
-	 * @param null|LoggerInterface|NullLogger $logger
+	 * @param LoggerInterface $logger New logger instance.
+	 * @return void
 	 */
-	public function setLogger($logger)
+	public function setLogger(LoggerInterface $logger)
 	{
 		$this->logger = $logger;
 	}
 
 	/**
-	 * @return \fork_daemon|null
+	 * @return \fork_daemon
 	 */
 	public function getForkDaemon()
 	{
@@ -283,9 +307,10 @@ class JobRunner
 	}
 
 	/**
-	 * @param \fork_daemon|null $fork_daemon
+	 * @param \fork_daemon $fork_daemon New instance of ForkDaemon.
+	 * @return void
 	 */
-	public function setForkDaemon($fork_daemon)
+	public function setForkDaemon(\fork_daemon $fork_daemon)
 	{
 		$this->fork_daemon = $fork_daemon;
 	}
@@ -299,9 +324,10 @@ class JobRunner
 	}
 
 	/**
-	 * @param JobRunnerConfig $config
+	 * @param JobRunnerConfig $config New config object.
+	 * @return void
 	 */
-	public function setConfig($config)
+	public function setConfig(JobRunnerConfig $config)
 	{
 		$this->config = $config;
 	}
