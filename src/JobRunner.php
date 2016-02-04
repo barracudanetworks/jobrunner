@@ -65,7 +65,8 @@ class JobRunner
 
 		// Set internal definitions
 		$definition['reflection'] = $reflection;
-		$definition['last_run_time'] = null;
+		$definition['last_run_time_start'] = null;
+		$definition['last_run_time_finish'] = null;
 
 		// Add to job list, using defaults where necessary
 		$this->jobs[$class] = $definition + [
@@ -101,18 +102,31 @@ class JobRunner
 			// Check if it's time to run the job
 			if ($this->canJobRun($class))
 			{
-				$this->logger->info("Adding job {$class} to work list");
-
-				$this->fork_daemon->addwork(array($class), $class, $class);
-				$this->fork_daemon->process_work(false, $class);
-
-				// Update runtime now, so that subsequent calls to run()
-				// dont kick the job off multiple times
-				$this->jobs[$class]['last_run_time'] = time();
+				$this->queueJob($class);
 			}
 		}
 
 		$this->logger->info("No more jobs to run");
+	}
+
+	/**
+	 * Adds a job to the fork_daemon work list so we'll start it.
+	 *
+	 * @param string $class Job class to start.
+	 * @return void
+	 */
+	private function queueJob($class)
+	{
+		$this->logger->info("Adding job {$class} to work list");
+
+		// Update runtime now, so that subsequent calls to run()
+		// dont kick the job off multiple times
+		$this->jobs[$class]['last_run_time_start'] = time();
+		$this->jobs[$class]['last_run_time_finish'] = null;
+
+		$this->fork_daemon->addwork(array($class), $class, $class);
+		$this->fork_daemon->process_work(false, $class);
+
 	}
 
 	/**
@@ -214,7 +228,7 @@ class JobRunner
 			return false;
 		}
 
-		$last_run_time = $job['last_run_time'];
+		$last_run_time = $job['last_run_time_start'];
 
 		// If the job is supposed to run at a scheduled time
 		if (isset($job['run_time']) && $job['run_time'])
@@ -273,8 +287,10 @@ class JobRunner
 	public function parentChildExit($pid)
 	{
 		// Bucket should be named after the job class
-		$bucket_name = $this->fork_daemon->getForkedChildren()[$pid]['bucket'];
-		$this->logger->info("Job {$bucket_name} finished");
+		$class = $this->fork_daemon->getForkedChildren()[$pid]['bucket'];
+
+		$this->jobs[$class]['last_run_time_finish'] = time();
+		$this->logger->info("Job {$class} finished");
 	}
 
 	/**

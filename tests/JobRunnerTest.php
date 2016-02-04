@@ -11,6 +11,20 @@ use Psr\Log\NullLogger;
 use fork_daemon;
 
 /**
+ * Mocks time() in the current namespace, for testing purposes.
+ * @return int
+ */
+function time()
+{
+	global $mockTime;
+	if ($mockTime)
+	{
+		return \time() - 120;
+	}
+	return \time();
+}
+
+/**
  * Tests the JobRunner class.
  */
 class JobRunnerTest extends \PHPUnit_Framework_TestCase
@@ -73,7 +87,8 @@ class JobRunnerTest extends \PHPUnit_Framework_TestCase
 
 		$this->assertContains('enabled', $job);
 		$this->assertContains('reflection', $job);
-		$this->assertContains('last_run_time', $job);
+		$this->assertContains('last_run_time_start', $job);
+		$this->assertContains('last_run_time_finish', $job);
 		$this->assertContains('run_time', $job);
 		$this->assertContains('interval', $job);
 
@@ -96,7 +111,8 @@ class JobRunnerTest extends \PHPUnit_Framework_TestCase
 
 			// Should not be retained
 			'reflection' => 'FOOBAR',
-			'last_run_time' => time(),
+			'last_run_time_start' => time(),
+			'last_run_time_finish' => time(),
 		]);
 
 		$job = $jr->getJobs()[JobStub::class];
@@ -106,7 +122,8 @@ class JobRunnerTest extends \PHPUnit_Framework_TestCase
 		$this->assertEquals('12:00', $job['run_time']);
 
 		// Should not retain given values
-		$this->assertEmpty($job['last_run_time']);
+		$this->assertEmpty($job['last_run_time_start']);
+		$this->assertEmpty($job['last_run_time_finish']);
 		$this->assertInstanceOf(ReflectionClass::class, $job['reflection']);
 
 		// Adding a non-Job class should throw an exception
@@ -122,6 +139,9 @@ class JobRunnerTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testRun()
 	{
+		// When set to true, time() will return 2 minutes past
+		global $mockTime;
+
 		$mock = m::mock('fork_daemon')->makePartial();
 		$jr = new JobRunner($mock);
 
@@ -148,8 +168,8 @@ class JobRunnerTest extends \PHPUnit_Framework_TestCase
 		// Make sure job run times are set
 		$jobs = $jr->getJobs();
 
-		$this->assertNotEmpty($jobs[JobStub::class]['last_run_time']);
-		$this->assertNotEmpty($jobs[AnotherJobStub::class]['last_run_time']);
+		$this->assertNotEmpty($jobs[JobStub::class]['last_run_time_start']);
+		$this->assertNotEmpty($jobs[AnotherJobStub::class]['last_run_time_start']);
 
 		$jr->run();
 
@@ -163,22 +183,10 @@ class JobRunnerTest extends \PHPUnit_Framework_TestCase
 		$mock = m::mock('fork_daemon')->makePartial();
 		$jr = new JobRunner($mock);
 
-		// JobStub should trigger once
-		$mock->shouldReceive('addwork')
-			->with([JobStub::class], JobStub::class, JobStub::class)
-			->once();
-		$mock->shouldReceive('process_work')->with(false, JobStub::class)->once();
-
 		// AnotherJobStub should not trigger
 		$mock->shouldNotReceive('addwork')
 			->with([AnotherJobStub::class], AnotherJobStub::class, AnotherJobStub::class);
 		$mock->shouldNotReceive('process_work')->with(false, AnotherJobStub::class);
-
-		// Unset interval, and define a run_time of now.
-		$jr->addJob(JobStub::class, [
-			'run_time' => (new DateTime)->format('H:i'),
-			'interval' => null
-		]);
 
 		// Set interval to false and define a run_time that isn't now
 		$jr->addJob(AnotherJobStub::class, [
@@ -186,9 +194,30 @@ class JobRunnerTest extends \PHPUnit_Framework_TestCase
 			'interval' => false,
 		]);
 
+
+		// JobStub should trigger twice because of the time() mocking magic below
+		$mock->shouldReceive('addwork')
+			->with([JobStub::class], JobStub::class, JobStub::class)
+			->twice();
+		$mock->shouldReceive('process_work')->with(false, JobStub::class)->twice();
+
+		// Unset interval, and define a run_time of now.
+		$jr->addJob(JobStub::class, [
+			'run_time' => (new DateTime)->format('H:i'),
+			'interval' => null
+		]);
+
+		// Run, but by mocking time here, we're setting last_run_time_start
+		// back two minutes, so we should be able to test the condition where
+		// last_run_time_start is set, but the job should run anyway.
+		$mockTime = true;
 		$jr->run();
 
-		// Running a second time shouldn't do anything
+		// Run it again, but without mocking time this time.
+		$mockTime = false;
+		$jr->run();
+
+		// Running a second time shouldn't do anything (running within the same minute)
 		$jr->run();
 
 		// Test disabled job
@@ -244,6 +273,23 @@ class JobRunnerTest extends \PHPUnit_Framework_TestCase
 		// Trying to get a non-existent job should throw an exception
 		$this->setExpectedException(InvalidArgumentException::class);
 		$jr->getJob(AnotherJobStub::class);
+	}
+
+	public function testParentChildExit()
+	{
+		$mock = m::mock('fork_daemon')->shouldIgnoreMissing();
+		$jr = new JobRunner($mock);
+
+		$mock->shouldReceive('getForkedChildren')->andReturn([
+			1 => ['bucket' => JobStub::class],
+		])->once();
+
+		$jr->addJob(JobStub::class, []);
+		$jr->run();
+
+		$jr->parentChildExit(1);
+
+		$this->assertInternalType('int', $jr->getJob(JobStub::class)['last_run_time_finish']);
 	}
 }
 
