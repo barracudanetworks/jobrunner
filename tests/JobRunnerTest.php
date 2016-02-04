@@ -357,7 +357,7 @@ class ForkingJobStub extends ForkingJob
 	 * @param int $workUnitsCount Inherited.
 	 * @return void
 	 */
-	public function createWork($workUnitsCount)
+	public function createWork()
 	{
 	}
 
@@ -367,15 +367,6 @@ class ForkingJobStub extends ForkingJob
 	 * @return void
 	 */
 	public function processWork(array $work)
-	{
-	}
-
-	/**
-	 * Must implement abstract method.
-	 * @param int $workUnitsCount Inherited.
-	 * @return void
-	 */
-	public function trackProcessedWork($workUnitsCount)
 	{
 	}
 
