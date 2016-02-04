@@ -11,16 +11,16 @@ abstract class ForkingJob extends Job implements ForkingJobInterface
 	 */
 	private $fork_daemon;
 
-	private $numChildren;
+	private $num_children;
 
-	private $itemCount;
+	private $item_count;
 
 	public function __construct(LoggerInterface $logger = null)
 	{
 		parent::__construct($logger);
 
-		$this->numChildren = 10;
-		$this->itemCount = 500;
+		$this->num_children = 10;
+		$this->item_count = 500;
 	}
 
 	public function start()
@@ -59,21 +59,21 @@ abstract class ForkingJob extends Job implements ForkingJobInterface
 
 	public function setNumChildren($numChildren)
 	{
-		$this->numChildren = $numChildren;
+		$this->num_children = $numChildren;
 	}
 
 	public function getNumChildren()
 	{
-		return $this->numChildren;
+		return $this->num_children;
 	}
 
 	public function setItemCount($itemCount)
 	{
-		$this->itemCount = $itemCount;
+		$this->item_count = $itemCount;
 	}
 
 	public function getItemCount()
 	{
-		return $this->itemCount;
+		return $this->item_count;
 	}
 }

@@ -16,32 +16,12 @@ abstract class Job implements JobInterface
 	protected $logger;
 
 	/**
-	 * @var bool State of the module, e.g. RUNNING/INACTIVE
-	 */
-	private $state;
-
-	/**
 	 * @var int The last time the module ran
 	 */
-	private $lastRunTime;
+	private $last_run_time;
 
 	/**
-	 * @var string When to run the job
-	 */
-	private $runAt;
-
-	/**
-	 * @var int How often the module should run, e.g. every 6 hours
-	 */
-	private $runInterval;
-
-	/**
-	 * @var int The max time the module should run
-	 */
-	private $maxRuntime;
-
-	/**
-	 * @param LoggerInterface|null $logger
+	 * @param LoggerInterface $logger PSR-3 logger object.
 	 */
 	public function __construct(LoggerInterface $logger = null)
 	{
@@ -52,27 +32,6 @@ abstract class Job implements JobInterface
 		}
 
 		$this->logger = $logger;
-
-		// Default to every 6 hours
-		$this->setRunInterval(21600);
-		// Default to 2 days
-		$this->setMaxRuntime(172800);
-	}
-
-	/**
-	 * @param $state
-	 */
-	public function setState($state)
-	{
-		$this->state = $state;
-	}
-
-	/**
-	 * @return int
-	 */
-	public function getState()
-	{
-		return $this->state;
 	}
 
 	/**
@@ -80,88 +39,24 @@ abstract class Job implements JobInterface
 	 */
 	public function getLastRunTime()
 	{
-		return $this->lastRunTime;
+		return $this->last_run_time;
 	}
 
 	/**
-	 * @param $lastRunTime
+	 * @param int $lastRunTime
+	 * @return void
 	 */
 	public function setLastRunTime($lastRunTime)
 	{
-		$this->lastRunTime = $lastRunTime;
+		$this->last_run_time = $lastRunTime;
 	}
 
 	/**
-	 * @return int
-	 */
-	public function getRunAt()
-	{
-		return $this->runAt;
-	}
-
-	/**
-	 * @param int $runAt
-	 */
-	public function setRunAt($runAt)
-	{
-		$this->runAt = $runAt;
-	}
-
-	/**
-	 * @return int
-	 */
-	public function getRunInterval()
-	{
-		return $this->runInterval;
-	}
-
-	/**
-	 * @param $runInterval
-	 */
-	public function setRunInterval($runInterval)
-	{
-		$this->runInterval = $runInterval;
-	}
-
-	/**
-	 * @return int
-	 */
-	public function getMaxRuntime()
-	{
-		return $this->maxRuntime;
-	}
-
-	/**
-	 * @param $maxRuntime
-	 */
-	public function setMaxRuntime($maxRuntime)
-	{
-		$this->maxRuntime = $maxRuntime;
-	}
-
-	/**
-	 * @return LoggerInterface|NullLogger
+	 * @return LoggerInterface
 	 */
 	public function getLogger()
 	{
 		return $this->logger;
-	}
-
-	/**
-	 * @return string the short name of the instantiated class
-	 */
-	public function getShortName()
-	{
-		$names = explode('\\', get_class($this));
-		return $names[count($names) - 1];
-	}
-
-	/**
-	 * @return string the full namespaced name of the instantiated class
-	 */
-	public function getName()
-	{
-		return get_class($this);
 	}
 }
 
