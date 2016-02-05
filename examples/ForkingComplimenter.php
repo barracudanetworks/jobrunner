@@ -1,60 +1,38 @@
 <?php
-
 namespace Barracuda\JobRunner\Examples;
-
 
 use Barracuda\JobRunner\ForkingJob;
 use Psr\Log\LoggerInterface;
 
 class ForkingComplimenter extends ForkingJob
 {
-	private $noMoreWork = false;
-	private $currentPointer = 0;
-
 	public function __construct(LoggerInterface $logger = null)
 	{
 		parent::__construct($logger);
 
-		$this->setRunInterval(5);
+		$this->setItemCount(100);
 	}
 
-	public function createWork($workUnitsCount)
+	public function createWork()
 	{
-		if ($this->noMoreWork)
+		// Adding a bunch at once
+		$work = [];
+		$count = 1;
+		while ($count <= 500)
 		{
-			return null;
+			$work[] = "You have " . $count . " friends!";
+			$count++;
 		}
-
-		$this->trackProcessedWork($workUnitsCount);
-
-		return array('You have ' . $this->currentPointer . ' friends!');
+		$this->addWork($work);
 	}
 
 	public function processWork(array $work)
 	{
-		$compliments = $work[0];
-
 		$pid = posix_getpid();
 
-		foreach ($compliments as $compliment)
+		foreach ($work as $compliment)
 		{
 			echo "pid: {$pid} | " . $compliment . PHP_EOL;
 		}
-	}
-
-	public function trackProcessedWork($workUnitsCount)
-	{
-		$this->currentPointer += $workUnitsCount;
-
-		if ($this->currentPointer >= 7000)
-		{
-			$this->noMoreWork = true;
-		}
-	}
-
-	public function cleanUp()
-	{
-		$this->noMoreWork = false;
-		$this->currentPointer = 0;
 	}
 }
