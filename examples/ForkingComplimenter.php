@@ -24,6 +24,9 @@ class ForkingComplimenter extends ForkingJob
 			$count++;
 		}
 		$this->addWork($work);
+
+		// Alternatively, you may return an array (like you would pass to
+		// $this->addWork), and it will be added automatically.
 	}
 
 	public function processWork(array $work)
