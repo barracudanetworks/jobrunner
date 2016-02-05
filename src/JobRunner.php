@@ -68,23 +68,19 @@ class JobRunner
 		$definition['last_run_time_start'] = null;
 		$definition['last_run_time_finish'] = null;
 
-		// Add to job list, using defaults where necessary
-		$this->jobs[$class] = $definition + [
-			'enabled' => true,
-
-			// Disabled
-			'run_time' => null,
-
-			// 6 hours
-			'interval' => 21600,
-
-			// 2 days
-			'max_run_time' => 172800,
+		// Fill in defaults
+		$definition = $definition + [
+			'enabled' => true, // Enabled
+			'run_time' => null, // No specific time
+			'interval' => 21600, // 6 hours
+			'max_run_time' => 172800, // 2 days
 		];
 
+		// Add to job list, using defaults where necessary
+		$this->jobs[$class] = $definition;
 		$this->createJobBuckets($class);
 
-		$this->logger->info("Registered job {$class}");
+		$this->logger->info("Registered job {$class}", $definition);
 	}
 
 	/**
