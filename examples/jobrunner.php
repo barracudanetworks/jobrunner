@@ -1,29 +1,19 @@
 <?php
+/**
+ * Example daemon utilizing JobRunner.
+ */
 
+// This line is important! Without it, fork_daemon won't behave properly.
 declare(ticks=1);
 
 require __DIR__ . '/../vendor/autoload.php';
-date_default_timezone_set('America/Detroit');
 
-$options = getopt('j:i');
-
-$jobName = null;
-if (array_key_exists('j', $options))
-{
-	$jobName = $options['j'];
-}
-
-$ignoreLastRunTime = false;
-if (array_key_exists('i', $options))
-{
-	$ignoreLastRunTime = $options['i'];
-}
-
-// Create the config that has your namespace for the modules and the directory they are located in
-$config = new \Barracuda\JobRunner\JobRunnerConfig('Barracuda\\JobRunner\\Examples\\', __DIR__, $jobName, $ignoreLastRunTime);
+date_default_timezone_set('UTC');
 
 // Instantiate the JobRunner
-$jobRunner = new \Barracuda\JobRunner\JobRunner($config);
+$jobRunner = new \Barracuda\JobRunner\JobRunner();
+$jobRunner->addJob(\Barracuda\JobRunner\Examples\ForkingComplimenter::class, ['interval' => 5]);
+$jobRunner->addJob(\Barracuda\JobRunner\Examples\Complainer::class, ['interval' => 3]);
 
 // Have the run method live inside of a while (true) daemonize the process
 while (true)
@@ -32,13 +22,9 @@ while (true)
 	{
 		$jobRunner->run();
 	}
-	catch (\Barracuda\JobRunner\JobRunnerFinishedException $e)
-	{
-		echo $e->getMessage() . PHP_EOL;
-		break;
-	}
 	catch (Exception $e)
 	{
 		echo 'Something went wrong: ' . $e->getMessage() . PHP_EOL;
 	}
+	sleep(1);
 }

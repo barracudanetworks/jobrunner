@@ -2,6 +2,10 @@
 
 namespace Barracuda\JobRunner;
 
+use ReflectionClass;
+use Exception;
+use InvalidArgumentException;
+
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
@@ -23,220 +27,254 @@ class JobRunner
 	private $fork_daemon;
 
 	/**
-	 * @var JobRunnerConfig
-	 */
-	private $config;
-
-	/**
-	 * @param JobRunnerConfig $config      JobRunner config object.
 	 * @param \fork_daemon    $fork_daemon Instance of ForkDaemon.
 	 * @param LoggerInterface $logger      Optionally, a logger.
 	 */
 	public function __construct(
-		JobRunnerConfig $config,
 		\fork_daemon $fork_daemon = null,
 		LoggerInterface $logger = null
 	)
 	{
-		// set up a default logger if one was not passed
-		if ($logger === null)
+		$this->logger = is_null($logger) ? new NullLogger() : $logger;
+		$this->fork_daemon = is_null($fork_daemon) ? new \fork_daemon() : $fork_daemon;
+	}
+
+	/**
+	 * Adds a job to the JobRunner instance.
+	 *
+	 * @param string $class      Path to the Job class.
+	 * @param array  $definition Job definition (e.g. interval).
+	 * @throws InvalidArgumentException If the given class does not subclass Job.
+	 * @return void
+	 */
+	public function addJob($class, array $definition = array())
+	{
+		$reflection = new ReflectionClass($class);
+		if (!$reflection->isSubclassOf(Job::class))
 		{
-			$logger = new NullLogger();
+			$this->logger->error("{$reflection->getShortName()} does not subclass " . Job::class);
+
+			throw new InvalidArgumentException("{$reflection->getShortName()} must subclass " . Job::class);
 		}
 
-		$this->logger = $logger;
-		$this->config = $config;
-
-		$this->jobs = $this->buildJobList();
-
-		if ($fork_daemon == null)
+		if (isset($this->jobs[$class]))
 		{
-			$fork_daemon = new \fork_daemon();
+			$this->logger->warning("{$reflection->getShortName()} is already registered, skipping");
+			return;
 		}
-		$this->fork_daemon = $fork_daemon;
-		$this->createJobBuckets();
+
+		// Set internal definitions
+		$definition['reflection'] = $reflection;
+		$definition['last_run_time_start'] = null;
+		$definition['last_run_time_finish'] = null;
+
+		// Add to job list, using defaults where necessary
+		$this->jobs[$class] = $definition + [
+			'enabled' => true,
+
+			// Disabled
+			'run_time' => null,
+
+			// 6 hours
+			'interval' => 21600,
+
+			// 2 days
+			'max_run_time' => 172800,
+		];
+
+		$this->createJobBuckets($class);
+
+		$this->logger->info("Registered job {$class}");
 	}
 
 	/**
 	 * This is the main function that will run jobs. It should be called in the
 	 * main event loop.
 	 *
-	 * @throws JobRunnerFinishedException When the jobs array is empty.
 	 * @return void
 	 */
 	public function run()
 	{
-		foreach ($this->jobs as $job)
-		{
-			$name = $job->getShortName();
+		$this->logger->info("Looking for jobs to run");
 
-			$workRunning = $this->fork_daemon->work_running($name);
-			if (count($workRunning) == 0)
+		foreach ($this->jobs as $class => $definition)
+		{
+			// Check if it's time to run the job
+			if ($this->canJobRun($class))
 			{
-				if ($this->canJobRun($job))
-				{
-					$this->fork_daemon->addwork(array($job), $name, $name);
-					$this->fork_daemon->process_work(false, $name);
-				}
+				$this->queueJob($class);
 			}
 		}
 
-		throw new JobRunnerFinishedException('No more jobs to do. Stopping JobRunner');
+		$this->logger->info("No more jobs to run");
 	}
 
 	/**
-	 * @param array $job Fork daemon can only add work as an array, so this
-	 *                   should have 1 item in it - the job object passed
-	 *                   from the run() function.
+	 * Adds a job to the fork_daemon work list so we'll start it.
+	 *
+	 * @param string $class Job class to start.
 	 * @return void
 	 */
-	public function processWork(array $job)
+	protected function queueJob($class)
 	{
-		$job = $job[0];
-		if ($job instanceof Job)
-		{
-			if ($job instanceof ForkingJob)
-			{
-				$class = get_class($this->fork_daemon);
-				$fork_daemon = new $class;
-				$job->setUpForking($fork_daemon);
-			}
+		$this->logger->info("Adding job {$class} to work list");
 
+		// Update runtime now, so that subsequent calls to run()
+		// dont kick the job off multiple times
+		$this->jobs[$class]['last_run_time_start'] = time();
+		$this->jobs[$class]['last_run_time_finish'] = null;
+
+		$this->fork_daemon->addwork(array($class), $class, $class);
+		$this->fork_daemon->process_work(false, $class);
+
+	}
+
+	/**
+	 * Called by fork_daemon when there is work to be processed.
+	 *
+	 * @param array $work Fork daemon can only add work as an array, so this
+	 *                    should have 1 item in it - the class name of a
+	 *                    registered Job.
+	 * @return void
+	 */
+	public function processWork(array $work)
+	{
+		// There should only be one element, so we'll only operate with the first
+		$class = array_pop($work);
+		if (!isset($this->jobs[$class]))
+		{
+			$this->logger->warning("Unknown work unit in fork_daemon, is something else adding work?", $work);
+			return;
+		}
+
+		$this->logger->info("Running job {$class}");
+
+		try
+		{
+			// Try to run the job
+			$job = $this->instantiateJob($class);
 			$job->start();
 		}
+		// Catching the very general Exception here so that we might also catch
+		// exceptions in the job's code.
+		catch (Exception $e)
+		{
+			$this->logger->error("Exception while trying to run {$this->jobs[$class]['reflection']->getShortName()}: " .
+				$e->getMessage());
+
+			return;
+		}
 	}
 
 	/**
-	 * @return array of Job objects keyd on their short names
-	 */
-	private function buildJobList()
-	{
-		$job_list = array();
-
-		$path = $this->config->getDirPath();
-		$psr4Path = $this->config->getPsr4Path();
-
-		// If jobName is set in the config, we are only going to run that job. Good for dev testing.
-		if ($this->config->getJobName() !== null)
-		{
-			$job_name = $psr4Path . $this->config->getJobName();
-			$job_list = $this->instantiateJob($job_name, $job_list);
-			return $job_list;
-		}
-
-		$dir_handle = opendir($path);
-
-		while (false !== ($filename = readdir($dir_handle)))
-		{
-			if (substr($filename, -4) == '.php')
-			{
-				$this->logger->info("Found job file '" . basename($filename) . "'");
-
-				$job_name = $psr4Path . substr(basename($filename), 0, strlen(basename($filename)) - 4);
-				$job_list = $this->instantiateJob($job_name, $job_list);
-			}
-		}
-
-		closedir($dir_handle);
-
-		return $job_list;
-	}
-
-	/**
-	 * Instantiates a job class (if it's indeed a job), and adds it to the
-	 * provided job list.
+	 * Instantiates a job class (if it's indeed a job).
 	 *
-	 * @param string $job_name The fully qualified path to the class.
-	 * @param array  $job_list Array of jobs already instantiated.
-	 * @return array Updated $job_list.
+	 * @param string $class The fully qualified path to the class.
+	 * @return object Instantiated object.
 	 */
-	protected function instantiateJob($job_name, array $job_list)
+	protected function instantiateJob($class)
 	{
-		if (is_subclass_of($job_name, 'Barracuda\\JobRunner\\Job'))
-		{
-			$job = new $job_name($this->logger);
+		// Make sure this is a real job
+		$reflection = $this->getJob($class)['reflection'];
 
-			$job_list[$job->getShortName()] = $job;
-		}
-		else
+		// Create a new instance
+		$job = $reflection->newInstance($this->logger);
+		if ($job instanceof ForkingJob)
 		{
-			$this->logger->warning($job_name . ' is not a subclass of Job, skipping.');
+			// If it's a ForkingJob, give it its own fork_daemon, using the same
+			// class that JobRunner uses.
+			$fork_daemon = (new ReflectionClass($this->fork_daemon))->newInstance();
+			$job->setUpForking($fork_daemon);
 		}
 
-		return $job_list;
+		return $job;
 	}
 
 	/**
 	 * This function creates a bucket for each job in fork daemon so it is
 	 * easier to manage if it should run or not.
 	 *
+	 * @param string $class Job to create buckets for.
 	 * @return void
 	 */
-	private function createJobBuckets()
+	private function createJobBuckets($class)
 	{
-		foreach ($this->jobs as $job_name => $job)
-		{
-			$this->fork_daemon->add_bucket($job_name);
-			$this->fork_daemon->max_children_set(1, $job_name);
-			$this->fork_daemon->register_child_run(array($this, 'processWork'), $job_name);
-			$this->fork_daemon->register_parent_child_exit(array($this, 'parentChildExit'), $job_name);
-			$this->fork_daemon->child_max_run_time_set($job->getMaxRuntime(), $job_name);
-		}
+		$job = $this->getJob($class);
+
+		$this->fork_daemon->add_bucket($class);
+		$this->fork_daemon->max_children_set(1, $class);
+		$this->fork_daemon->register_child_run(array($this, 'processWork'), $class);
+		$this->fork_daemon->register_parent_child_exit(array($this, 'parentChildExit'), $class);
+		$this->fork_daemon->child_max_run_time_set($job['max_run_time'], $class);
 	}
 
 	/**
 	 * Returns true if a job can run, false otherwise.
 	 *
-	 * @param Job $job The job to check.
+	 * @param string $class The job to check.
 	 * @return bool
 	 */
-	protected function canJobRun(Job $job)
+	protected function canJobRun($class)
 	{
-		if ($job->getState() == JobConstants::MODULE_NO_START)
+		$job = $this->getJob($class);
+		if ($job['enabled'] == false)
 		{
 			return false;
 		}
 
-		$lastRunTime = $job->getLastRunTime();
+		// If this job is already running, don't start it again
+		if (count($this->fork_daemon->work_running($class)) != 0)
+		{
+			return false;
+		}
+
+		$last_run_time = $job['last_run_time_start'];
 
 		// If the job is supposed to run at a scheduled time
-		$timeSchedule = $job->getRunAt();
-		if ($timeSchedule != null)
+		if (isset($job['run_time']) && $job['run_time'])
 		{
-			$currentTime = new \DateTime();
-			if ($lastRunTime != null)
+			$now = new \DateTime();
+
+			// Check if the run time is now
+			if ($job['run_time'] == $now->format('H:i'))
 			{
-				$lastRun = new \DateTime();
-				$lastRun = $lastRun->setTimestamp($lastRunTime);
-
-				$difference = $lastRun->diff($currentTime);
-
-				// If the last time this ran is the same as the current time, don't let this job run.
-				if ($difference->h == 0 && $difference->i == 0)
+				// If we haven't run before, we can run
+				if (is_null($last_run_time))
 				{
-					return false;
+					return true;
+				}
+				else
+				{
+					$last_run = new \DateTime();
+					$last_run->setTimestamp($last_run_time);
+
+					$difference = $last_run->diff($now);
+
+					// If the last run wasn't this minute, we can run
+					if ($difference->days != 0 || $difference->h != 0 || $difference->i != 0)
+					{
+						return true;
+					}
 				}
 			}
+		}
 
-			$currentTimeHoursMinutes = $currentTime->format('H:i');
-			if ($currentTimeHoursMinutes == $timeSchedule)
+		// If the job runs on an interval, check if it's ready to run
+		if (isset($job['interval']) && $job['interval'])
+		{
+			// If it hasn't run yet, run it!
+			if (is_null($last_run_time))
 			{
 				return true;
 			}
-			return false;
+
+			if ((time() - $last_run_time) > $job['interval'])
+			{
+				return true;
+			}
 		}
 
-		// If there is no lastRunTime set, it means we are running for the first time, so return true.
-		if ($lastRunTime == null)
-		{
-			return true;
-		}
-
-		if (time() - $lastRunTime > $job->getRunInterval())
-		{
-			return true;
-		}
-
+		// No run condition hit
 		return false;
 	}
 
@@ -248,20 +286,22 @@ class JobRunner
 	 */
 	public function parentChildExit($pid)
 	{
-		$bucket = $this->fork_daemon->getForkedChildren()[$pid]['bucket'];
-		$job = $this->jobs[$bucket];
-		$this->updateJobLastRunTime($job);
+		// Bucket should be named after the job class
+		$class = $this->fork_daemon->getForkedChildren()[$pid]['bucket'];
+
+		$this->jobFinished($class);
 	}
 
 	/**
-	 * Updates a given job's last runtime to now.
+	 * Called whenever a job exits (according to fork_daemon).
 	 *
-	 * @param Job $job The job to update.
+	 * @param string $class The job that finished.
 	 * @return void
 	 */
-	protected function updateJobLastRunTime(Job $job)
+	protected function jobFinished($class)
 	{
-		$job->setLastRunTime(time());
+		$this->jobs[$class]['last_run_time_finish'] = time();
+		$this->logger->info("Job {$class} finished");
 	}
 
 	/**
@@ -274,13 +314,20 @@ class JobRunner
 	}
 
 	/**
-	 * Sets the jobs array.
-	 * @param array $jobs New list of jobs.
-	 * @return void
+	 * Returns a given job's definition.
+	 *
+	 * @param string $class The job class to lookup.
+	 * @throws InvalidArgumentException If the job isn't registered.
+	 * @return array
 	 */
-	public function setJobs(array $jobs)
+	public function getJob($class)
 	{
-		$this->jobs = $jobs;
+		if (!isset($this->jobs[$class]))
+		{
+			throw new InvalidArgumentException("{$class} is not a registered job");
+		}
+
+		return $this->jobs[$class];
 	}
 
 	/**
@@ -292,45 +339,10 @@ class JobRunner
 	}
 
 	/**
-	 * @param LoggerInterface $logger New logger instance.
-	 * @return void
-	 */
-	public function setLogger(LoggerInterface $logger)
-	{
-		$this->logger = $logger;
-	}
-
-	/**
 	 * @return \fork_daemon
 	 */
 	public function getForkDaemon()
 	{
 		return $this->fork_daemon;
-	}
-
-	/**
-	 * @param \fork_daemon $fork_daemon New instance of ForkDaemon.
-	 * @return void
-	 */
-	public function setForkDaemon(\fork_daemon $fork_daemon)
-	{
-		$this->fork_daemon = $fork_daemon;
-	}
-
-	/**
-	 * @return JobRunnerConfig
-	 */
-	public function getConfig()
-	{
-		return $this->config;
-	}
-
-	/**
-	 * @param JobRunnerConfig $config New config object.
-	 * @return void
-	 */
-	public function setConfig(JobRunnerConfig $config)
-	{
-		$this->config = $config;
 	}
 }
