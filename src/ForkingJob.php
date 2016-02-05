@@ -59,11 +59,17 @@ abstract class ForkingJob extends Job implements ForkingJobInterface
 		} while ($this->fork_daemon->work_sets_count() > 0);
 
 		// wait for children to finish working
-		while ($this->fork_daemon->children_running() > 0)
+		do
 		{
-			$this->logger->debug("Waiting for all children to finish");
-			sleep(1);
-		}
+			$children_remaining = $this->fork_daemon->children_running();
+			if ($children_remaining)
+			{
+				$this->logger->debug("Waiting for all children to finish, {$children_remaining} remaining");
+				sleep(1);
+			}
+		} while ($children_remaining);
+
+		$this->logger->info("All children exited, fin!");
 	}
 
 	/**
