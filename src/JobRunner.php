@@ -115,7 +115,7 @@ class JobRunner
 	 * @param string $class Job class to start.
 	 * @return void
 	 */
-	private function queueJob($class)
+	protected function queueJob($class)
 	{
 		$this->logger->info("Adding job {$class} to work list");
 
@@ -289,6 +289,17 @@ class JobRunner
 		// Bucket should be named after the job class
 		$class = $this->fork_daemon->getForkedChildren()[$pid]['bucket'];
 
+		$this->jobFinished($class);
+	}
+
+	/**
+	 * Called whenever a job exits (according to fork_daemon).
+	 *
+	 * @param string $class The job that finished.
+	 * @return void
+	 */
+	protected function jobFinished($class)
+	{
 		$this->jobs[$class]['last_run_time_finish'] = time();
 		$this->logger->info("Job {$class} finished");
 	}
