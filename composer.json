@@ -12,7 +12,11 @@
   },
   "autoload": {
     "psr-4": {
-      "Barracuda\\JobRunner\\": "src",
+      "Barracuda\\JobRunner\\": "src"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
       "Barracuda\\JobRunner\\Examples\\": "examples"
     }
   },
