@@ -95,7 +95,7 @@ class JobRunner
 	 */
 	public function run()
 	{
-		$this->logger->info("Looking for jobs to run");
+		$this->logger->debug("Looking for jobs to run");
 
 		foreach ($this->jobs as $class => $definition)
 		{
@@ -106,7 +106,7 @@ class JobRunner
 			}
 		}
 
-		$this->logger->info("No more jobs to run");
+		$this->logger->debug("No more jobs to run");
 	}
 
 	/**
