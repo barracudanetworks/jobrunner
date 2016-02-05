@@ -58,10 +58,10 @@ class ForkingJobTest extends \PHPUnit_Framework_TestCase
 		$this->job->shouldReceive('createWork')->once()->andReturn($work);
 
 		$this->fork_daemon->shouldReceive('addwork')->with($work)->once();
-		$this->fork_daemon->shouldReceive('process_work')->with(false)->once();
+		$this->fork_daemon->shouldReceive('process_work')->with(false)->atLeast()->once();
 
-		// The last step of creating work, we block on process_work
-		$this->fork_daemon->shouldReceive('process_work')->with(true)->once();
+		// Test that we check children_running (and hit that code)
+		$this->fork_daemon->shouldReceive('children_running')->twice()->andReturnValues([1, 0]);
 
 		$this->job->start();
 

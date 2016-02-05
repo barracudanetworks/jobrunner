@@ -52,8 +52,18 @@ abstract class ForkingJob extends Job implements ForkingJobInterface
 			throw new Exception("createWork() may only return an array!");
 		}
 
+		// process all work sets
+		do
+		{
+			$this->fork_daemon->process_work(false);
+		} while ($this->fork_daemon->work_sets_count() > 0);
+
 		// wait for children to finish working
-		$this->fork_daemon->process_work(true);
+		while ($this->fork_daemon->children_running() > 0)
+		{
+			$this->logger->debug("Waiting for all children to finish");
+			sleep(1);
+		}
 	}
 
 	/**
@@ -65,7 +75,6 @@ abstract class ForkingJob extends Job implements ForkingJobInterface
 	protected function addWork(array $work)
 	{
 		$this->fork_daemon->addwork($work);
-		$this->fork_daemon->process_work(false);
 	}
 
 	/**
