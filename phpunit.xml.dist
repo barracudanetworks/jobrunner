@@ -13,7 +13,13 @@
 	<listeners>
 		<listener class="\Mockery\Adapter\Phpunit\TestListener" />
 	</listeners>
+
 	<logging>
 		<log type="coverage-html" target="coverage" charset="UTF-8" highlight="true" />
 	</logging>
+	<filter>
+		<whitelist processUncoveredFilesFromWhitelist="true">
+			<directory suffix='.php'>src</directory>
+		</whitelist>
+	</filter>
 </phpunit>
