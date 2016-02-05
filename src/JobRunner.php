@@ -85,7 +85,7 @@ class JobRunner
 			// Remove internal definition keys when logging
 			array_diff_key(
 				$definition,
-				['reflection', 'last_run_time_start', 'last_run_time_finish']
+				array_flip(['reflection', 'last_run_time_start', 'last_run_time_finish'])
 			)
 		);
 	}
