@@ -80,7 +80,14 @@ class JobRunner
 		$this->jobs[$class] = $definition;
 		$this->createJobBuckets($class);
 
-		$this->logger->info("Registered job {$class}", $definition);
+		$this->logger->info(
+			"Registered job {$class}",
+			// Remove internal definition keys when logging
+			array_diff_key(
+				$definition,
+				['reflection', 'last_run_time_start', 'last_run_time_finish']
+			)
+		);
 	}
 
 	/**
