@@ -185,8 +185,14 @@ class JobRunner
 		if ($job instanceof ForkingJob)
 		{
 			// If it's a ForkingJob, give it its own fork_daemon, using the same
-			// class that JobRunner uses.
+			// class that JobRunner is using, and register the `prepareToFork()`
+			// method to be called before ForkingJob forks children.
 			$fork_daemon = (new ReflectionClass($this->fork_daemon))->newInstance();
+			$fork_daemon->register_parent_prefork(array(
+				[$job, 'prepareToFork'],
+			));
+
+			// Setup the ForkingJob with the new fork_daemon instance
 			$job->setUpForking($fork_daemon);
 		}
 

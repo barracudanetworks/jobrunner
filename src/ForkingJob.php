@@ -116,6 +116,14 @@ abstract class ForkingJob extends Job implements ForkingJobInterface
 	abstract public function processWork(array $work);
 
 	/**
+	 * Optional code to be called before forking any worker children.
+	 * @return void
+	 */
+	public function prepareToFork()
+	{
+	}
+
+	/**
 	 * Optional cleanup code, called when the Job's fork_daemon exits.
 	 * @return void
 	 */
