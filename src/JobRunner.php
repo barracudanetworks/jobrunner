@@ -67,6 +67,14 @@ class JobRunner
 		{
 			$definition = new JobDefinition();
 		}
+		else
+		{
+			// If we have a run_time and interval set, we will ignore the interval when checking if job can run.
+			if (!is_null($definition->getInterval()) && !is_null($definition->getRunTime()))
+			{
+				$this->logger->warning("Both run_time and interval are set for {$reflection->getShortName()} — prioritizing run_time");
+			}
+		}
 
 		// Set internal definitions
 		$definition->setLastRunTimeStart(null);
@@ -77,7 +85,7 @@ class JobRunner
 		$this->jobs[$class] = $definition;
 		$this->createJobBuckets($class);
 
-		$this->logger->info("Registered job {$class}");
+		$this->logger->info("Registered job {$reflection->getShortName()}");
 	}
 
 	/**
@@ -110,7 +118,7 @@ class JobRunner
 	 */
 	protected function queueJob($class)
 	{
-		$this->logger->info("Adding job {$class} to work list");
+		$this->logger->info("Adding job {$this->jobs[$class]->getReflection()->getShortName()} to work list");
 
 		// Update runtime now, so that subsequent calls to run()
 		// dont kick the job off multiple times
@@ -139,7 +147,7 @@ class JobRunner
 			return;
 		}
 
-		$this->logger->info("Running job {$class}");
+		$this->logger->info("Running job {$this->jobs[$class]->getReflection()->getShortName()}");
 
 		try
 		{
@@ -301,7 +309,7 @@ class JobRunner
 	protected function jobFinished($class, JobDefinition $job_definition)
 	{
 		$job_definition->setLastRunTimeFinish(time());
-		$this->logger->info("Job {$class} finished");
+		$this->logger->info("Job {$this->jobs[$class]->getReflection()->getShortName()} finished");
 	}
 
 	/**
