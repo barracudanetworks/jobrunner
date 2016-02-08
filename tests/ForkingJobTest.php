@@ -58,6 +58,7 @@ class ForkingJobTest extends \PHPUnit_Framework_TestCase
 		$this->job->shouldReceive('createWork')->once()->andReturn($work);
 
 		$this->fork_daemon->shouldReceive('addwork')->with($work)->once();
+		// Blocking process_work call should be made to ensure work units are distributed
 		$this->fork_daemon->shouldReceive('process_work')->with(true)->atLeast()->once();
 
 		$this->job->start();
