@@ -58,5 +58,21 @@ abstract class Job implements JobInterface
 	{
 		return $this->logger;
 	}
-}
 
+	/**
+	 * @return string The short name of the instantiated Job class.
+	 */
+	public function getShortName()
+	{
+		$names = explode('\\', get_class($this));
+		return array_pop($names);
+	}
+
+	/**
+	 * @return string The full namespaced name of the instantiated class.
+	 */
+	public function getName()
+	{
+		return get_class($this);
+	}
+}

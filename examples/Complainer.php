@@ -14,6 +14,6 @@ class Complainer extends Job
 
 	public function start()
 	{
-		echo 'I am hungry!' . PHP_EOL;
+		echo "[{$this->getShortName()}] I am hungry!" . PHP_EOL;
 	}
 }

@@ -13,4 +13,8 @@ interface JobInterface
 	public function setLastRunTime($lastRunTime);
 
 	public function getLogger();
+
+	public function getShortName();
+
+	public function getName();
 }
