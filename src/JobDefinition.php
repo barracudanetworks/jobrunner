@@ -2,21 +2,45 @@
 
 namespace Barracuda\JobRunner;
 
-
+/**
+ * Class JobDefinition
+ * This class has configuration relevant to running the job. E.g. when and for how long.
+ */
 class JobDefinition
 {
+	/**
+	 * @var bool
+	 */
 	private $enabled;
 
+	/**
+	 * @var null|string
+	 */
 	private $run_time;
 
+	/**
+	 * @var int
+	 */
 	private $interval;
 
+	/**
+	 * @var int
+	 */
 	private $max_run_time;
 
+	/**
+	 * @var \ReflectionClass The instance of ReflectionClass of the Job class
+	 */
 	private $reflection;
 
+	/**
+	 * @var int The unix timestamp of when the job last started.
+	 */
 	private $last_run_time_start;
 
+	/**
+	 * @var int The unix timestamp of when the job last finished.
+	 */
 	private $last_run_time_finish;
 
 	/**
