@@ -10,10 +10,12 @@ require __DIR__ . '/../vendor/autoload.php';
 
 date_default_timezone_set('UTC');
 
+use \Barracuda\JobRunner\JobDefinition;
+
 // Instantiate the JobRunner
 $jobRunner = new \Barracuda\JobRunner\JobRunner();
-$jobRunner->addJob(\Barracuda\JobRunner\Examples\ForkingComplimenter::class, ['interval' => 5]);
-$jobRunner->addJob(\Barracuda\JobRunner\Examples\Complainer::class, ['interval' => 3]);
+$jobRunner->addJob(\Barracuda\JobRunner\Examples\ForkingComplimenter::class, new JobDefinition(true, null, 5, null));
+$jobRunner->addJob(\Barracuda\JobRunner\Examples\Complainer::class, new JobDefinition(true, null, 3, null));
 
 // Have the run method live inside of a while (true) daemonize the process
 while (true)

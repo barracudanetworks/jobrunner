@@ -42,12 +42,12 @@ class JobRunner
 	/**
 	 * Adds a job to the JobRunner instance.
 	 *
-	 * @param string $class      Path to the Job class.
-	 * @param array  $definition Job definition (e.g. interval).
+	 * @param string         $class      Path to the Job class.
+	 * @param JobDefinition  $definition Job definition (e.g. interval).
 	 * @throws InvalidArgumentException If the given class does not subclass Job.
 	 * @return void
 	 */
-	public function addJob($class, array $definition = array())
+	public function addJob($class, JobDefinition $definition = null)
 	{
 		$reflection = new ReflectionClass($class);
 		if (!$reflection->isSubclassOf(Job::class))
@@ -63,31 +63,21 @@ class JobRunner
 			return;
 		}
 
-		// Set internal definitions
-		$definition['reflection'] = $reflection;
-		$definition['last_run_time_start'] = null;
-		$definition['last_run_time_finish'] = null;
+		if (is_null($definition))
+		{
+			$definition = new JobDefinition();
+		}
 
-		// Fill in defaults
-		$definition = $definition + [
-			'enabled' => true, // Enabled
-			'run_time' => null, // No specific time
-			'interval' => 21600, // 6 hours
-			'max_run_time' => 172800, // 2 days
-		];
+		// Set internal definitions
+		$definition->setLastRunTimeStart(null);
+		$definition->setLastRunTimeFinish(null);
+		$definition->setReflection($reflection);
 
 		// Add to job list, using defaults where necessary
 		$this->jobs[$class] = $definition;
 		$this->createJobBuckets($class);
 
-		$this->logger->info(
-			"Registered job {$class}",
-			// Remove internal definition keys when logging
-			array_diff_key(
-				$definition,
-				array_flip(['reflection', 'last_run_time_start', 'last_run_time_finish'])
-			)
-		);
+		$this->logger->info("Registered job {$class}");
 	}
 
 	/**
@@ -103,7 +93,7 @@ class JobRunner
 		foreach ($this->jobs as $class => $definition)
 		{
 			// Check if it's time to run the job
-			if ($this->canJobRun($class))
+			if ($this->canJobRun($class, $this->jobs[$class]))
 			{
 				$this->queueJob($class);
 			}
@@ -124,7 +114,7 @@ class JobRunner
 
 		// Update runtime now, so that subsequent calls to run()
 		// dont kick the job off multiple times
-		$this->jobs[$class]['last_run_time_start'] = time();
+		$this->jobs[$class]->setLastRunTimeStart(time());
 
 		$this->fork_daemon->addwork(array($class), $class, $class);
 		$this->fork_daemon->process_work(false, $class);
@@ -158,7 +148,7 @@ class JobRunner
 			if ($job instanceof Job)
 			{
 				// Pass relevant info to the job from the parent before calling start
-				$job->setLastRunTime($this->jobs[$class]['last_run_time_finish']);
+				$job->setLastRunTime($this->jobs[$class]->getLastRunTimeFinish());
 
 				$job->start();
 			}
@@ -167,7 +157,7 @@ class JobRunner
 		// exceptions in the job's code.
 		catch (Exception $e)
 		{
-			$this->logger->error("Exception while trying to run {$this->jobs[$class]['reflection']->getShortName()}: " .
+			$this->logger->error("Exception while trying to run {$this->jobs[$class]->getReflection()->getShortName()}: " .
 				$e->getMessage());
 
 			return;
@@ -183,7 +173,7 @@ class JobRunner
 	protected function instantiateJob($class)
 	{
 		// Make sure this is a real job
-		$reflection = $this->getJob($class)['reflection'];
+		$reflection = $this->getJob($class)->getReflection();
 
 		// Create a new instance
 		$job = $reflection->newInstance($this->logger);
@@ -213,19 +203,19 @@ class JobRunner
 		$this->fork_daemon->max_children_set(1, $class);
 		$this->fork_daemon->register_child_run(array($this, 'processWork'), $class);
 		$this->fork_daemon->register_parent_child_exit(array($this, 'parentChildExit'), $class);
-		$this->fork_daemon->child_max_run_time_set($job['max_run_time'], $class);
+		$this->fork_daemon->child_max_run_time_set($job->getMaxRunTime(), $class);
 	}
 
 	/**
 	 * Returns true if a job can run, false otherwise.
 	 *
-	 * @param string $class The job to check.
+	 * @param string         $class          The job to check.
+	 * @param JobDefinition  $job_definition The job definition.
 	 * @return bool
 	 */
-	protected function canJobRun($class)
+	protected function canJobRun($class, JobDefinition $job_definition)
 	{
-		$job = $this->getJob($class);
-		if ($job['enabled'] == false)
+		if ($job_definition->getEnabled() == false)
 		{
 			return false;
 		}
@@ -236,15 +226,15 @@ class JobRunner
 			return false;
 		}
 
-		$last_run_time = $job['last_run_time_start'];
+		$last_run_time = $job_definition->getLastRunTimeStart();
 
 		// If the job is supposed to run at a scheduled time
-		if (isset($job['run_time']) && $job['run_time'])
+		if (!is_null($job_definition->getRunTime()))
 		{
 			$now = new \DateTime();
 
 			// Check if the run time is now
-			if ($job['run_time'] == $now->format('H:i'))
+			if ($job_definition->getRunTime() == $now->format('H:i'))
 			{
 				// If we haven't run before, we can run
 				if (is_null($last_run_time))
@@ -269,7 +259,7 @@ class JobRunner
 		}
 
 		// If the job runs on an interval, check if it's ready to run
-		if (isset($job['interval']) && $job['interval'])
+		if (!is_null($job_definition->getInterval()))
 		{
 			// If it hasn't run yet, run it!
 			if (is_null($last_run_time))
@@ -277,7 +267,7 @@ class JobRunner
 				return true;
 			}
 
-			if ((time() - $last_run_time) > $job['interval'])
+			if ((time() - $last_run_time) > $job_definition->getInterval())
 			{
 				return true;
 			}
@@ -298,18 +288,19 @@ class JobRunner
 		// Bucket should be named after the job class
 		$class = $this->fork_daemon->getForkedChildren()[$pid]['bucket'];
 
-		$this->jobFinished($class);
+		$this->jobFinished($class, $this->jobs[$class]);
 	}
 
 	/**
 	 * Called whenever a job exits (according to fork_daemon).
 	 *
-	 * @param string $class The job that finished.
+	 * @param string        $class          The job that finished.
+	 * @param JobDefinition $job_definition The job definition.
 	 * @return void
 	 */
-	protected function jobFinished($class)
+	protected function jobFinished($class, JobDefinition $job_definition)
 	{
-		$this->jobs[$class]['last_run_time_finish'] = time();
+		$job_definition->setLastRunTimeFinish(time());
 		$this->logger->info("Job {$class} finished");
 	}
 
