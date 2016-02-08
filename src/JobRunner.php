@@ -125,7 +125,6 @@ class JobRunner
 		// Update runtime now, so that subsequent calls to run()
 		// dont kick the job off multiple times
 		$this->jobs[$class]['last_run_time_start'] = time();
-		$this->jobs[$class]['last_run_time_finish'] = null;
 
 		$this->fork_daemon->addwork(array($class), $class, $class);
 		$this->fork_daemon->process_work(false, $class);
@@ -156,7 +155,13 @@ class JobRunner
 		{
 			// Try to run the job
 			$job = $this->instantiateJob($class);
-			$job->start();
+			if ($job instanceof Job)
+			{
+				// Pass relevant info to the job from the parent before calling start
+				$job->setLastRunTime($this->jobs[$class]['last_run_time_finish']);
+
+				$job->start();
+			}
 		}
 		// Catching the very general Exception here so that we might also catch
 		// exceptions in the job's code.
@@ -260,6 +265,7 @@ class JobRunner
 					}
 				}
 			}
+			return false;
 		}
 
 		// If the job runs on an interval, check if it's ready to run
