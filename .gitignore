@@ -3,7 +3,8 @@ vendor/
 composer.lock
 
 # phpunit
-coverage/
+phpunit.xml
+build/
 
 # editors
 .idea/

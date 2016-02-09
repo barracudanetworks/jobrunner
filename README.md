@@ -1,4 +1,6 @@
 # PHP Job Runner
+[![Build Status](https://travis-ci.org/barracudanetworks/jobrunner.svg?branch=master)](https://travis-ci.org/barracudanetworks/jobrunner) [![Code Climate](https://codeclimate.com/github/barracudanetworks/jobrunner/badges/gpa.svg)](https://codeclimate.com/github/barracudanetworks/jobrunner) [![Test Coverage](https://codeclimate.com/github/barracudanetworks/jobrunner/badges/coverage.svg)](https://codeclimate.com/github/barracudanetworks/jobrunner/coverage)
+
 A library to make runnable jobs with PHP easy. The library also supports creating jobs that have children backed by our PHP Fork Daemon.
 
 ## Usage
