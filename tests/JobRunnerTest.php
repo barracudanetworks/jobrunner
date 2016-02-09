@@ -76,7 +76,7 @@ class JobRunnerTest extends \PHPUnit_Framework_TestCase
 		$mock->shouldReceive('child_max_run_time_set')->with(172800, JobStub::class)->once();
 
 		// Check Job added correctly
-		$jr->addJob(JobStub::class, []);
+		$jr->addJob(new JobDefinition(JobStub::class));
 		$jobs = $jr->getJobs();
 
 		$this->assertArrayHasKey(JobStub::class, $jobs);
@@ -85,52 +85,58 @@ class JobRunnerTest extends \PHPUnit_Framework_TestCase
 		// Check job default definitions
 		$job = $jobs[JobStub::class];
 
-		$this->assertContains('enabled', $job);
-		$this->assertContains('reflection', $job);
-		$this->assertContains('last_run_time_start', $job);
-		$this->assertContains('last_run_time_finish', $job);
-		$this->assertContains('run_time', $job);
-		$this->assertContains('interval', $job);
+		$this->assertInstanceOf(JobDefinition::class, $job);
 
 		// Check enabled by default, and ReflectionClass saved
-		$this->assertTrue($job['enabled']);
-		$this->assertInstanceOf(ReflectionClass::class, $job['reflection']);
+		$this->assertTrue($job->getEnabled());
+		$this->assertInstanceOf(ReflectionClass::class, $job->getReflection());
 
 		// Adding it twice should have no effect
-		$jr->addJob(JobStub::class, []);
+		$jr->addJob(new JobDefinition(JobStub::class));
 
 		$this->assertArrayHasKey(JobStub::class, $jobs);
 		$this->assertCount(1, $jobs);
 
 		// Try again, setting some definition values
 		$jr = new JobRunner();
-		$jr->addJob(JobStub::class, [
-			'enabled' => false,
-			'interval' => 3600,
-			'run_time' => '12:00',
+		$jd = new JobDefinition(JobStub::class, false, null, 3600);
 
-			// Should not be retained
-			'reflection' => 'FOOBAR',
-			'last_run_time_start' => time(),
-			'last_run_time_finish' => time(),
-		]);
+		// should not be retained
+		$jd->setLastRunTimeStart(time());
+		$jd->setLastRunTimeFinish(time());
+		$jr->addJob($jd);
 
 		$job = $jr->getJobs()[JobStub::class];
 
-		$this->assertFalse($job['enabled']);
-		$this->assertEquals(3600, $job['interval']);
-		$this->assertEquals('12:00', $job['run_time']);
+		$this->assertInstanceOf(JobDefinition::class, $job);
+
+		$this->assertFalse($job->getEnabled());
+		$this->assertEquals(3600, $job->getInterval());
 
 		// Should not retain given values
-		$this->assertEmpty($job['last_run_time_start']);
-		$this->assertEmpty($job['last_run_time_finish']);
-		$this->assertInstanceOf(ReflectionClass::class, $job['reflection']);
+		$this->assertEmpty($job->getLastRunTimeStart());
+		$this->assertEmpty($job->getLastRunTimeFinish());
+		$this->assertInstanceOf(ReflectionClass::class, $job->getReflection());
+
+		// Add a job with a run_time and interval set to see that interval is ignored and set back to null
+		$definition = new JobDefinition(JobStub::class, true, '12:00', 5);
+		$jr = new JobRunner();
+
+		$jr->addJob($definition);
+		$updated_jd = $jr->getJob($definition->getClassName());
+		$this->assertNull($updated_jd->getInterval());
+
+		// Test adding a class extending JobDefinition
+		$jr = new JobRunner();
+		$jr->addJob(new ExtendingJobDefinition(JobStub::class));
+		$this->assertInstanceOf(JobDefinition::class, $jr->getJob(JobStub::class));
 
 		// Adding a non-Job class should throw an exception
 		$this->setExpectedException(Exception::class);
 
 		$jr = new JobRunner();
-		$jr->addJob(stdClass::class, []);
+		$jr->addJob(new JobDefinition(stdClass::class));
+
 	}
 
 	/**
@@ -155,12 +161,10 @@ class JobRunnerTest extends \PHPUnit_Framework_TestCase
 		$mock->shouldReceive('process_work')->with(false, AnotherJobStub::class)->once();
 
 		// Interval of -1 means this should run every time run() is called
-		$jr->addJob(JobStub::class, ['interval' => -1]);
+		$jr->addJob(new JobDefinition(JobStub::class, true, null, -1));
 
 		// Should only run once every 100 seconds
-		$jr->addJob(AnotherJobStub::class, ['interval' => 100]);
-
-		$jobs = $jr->getJobs();
+		$jr->addJob(new JobDefinition(AnotherJobStub::class, true, null, 100));
 
 		// Call run() twice, so that the mock expectations are satisfied
 		$jr->run();
@@ -168,8 +172,8 @@ class JobRunnerTest extends \PHPUnit_Framework_TestCase
 		// Make sure job run times are set
 		$jobs = $jr->getJobs();
 
-		$this->assertNotEmpty($jobs[JobStub::class]['last_run_time_start']);
-		$this->assertNotEmpty($jobs[AnotherJobStub::class]['last_run_time_start']);
+		$this->assertNotEmpty($jobs[JobStub::class]->getLastRunTimeStart());
+		$this->assertNotEmpty($jobs[AnotherJobStub::class]->getLastRunTimeStart());
 
 		$jr->run();
 
@@ -189,10 +193,7 @@ class JobRunnerTest extends \PHPUnit_Framework_TestCase
 		$mock->shouldNotReceive('process_work')->with(false, AnotherJobStub::class);
 
 		// Set interval to false and define a run_time that isn't now
-		$jr->addJob(AnotherJobStub::class, [
-			'run_time' => (new DateTime('+1 hour'))->format('H:i'),
-			'interval' => false,
-		]);
+		$jr->addJob(new JobDefinition(AnotherJobStub::class, true, (new DateTime('+1 hour'))->format('H:i'), false));
 
 
 		// JobStub should trigger twice because of the time() mocking magic below
@@ -202,10 +203,7 @@ class JobRunnerTest extends \PHPUnit_Framework_TestCase
 		$mock->shouldReceive('process_work')->with(false, JobStub::class)->twice();
 
 		// Unset interval, and define a run_time of now.
-		$jr->addJob(JobStub::class, [
-			'run_time' => (new DateTime)->format('H:i'),
-			'interval' => null
-		]);
+		$jr->addJob(new JobDefinition(JobStub::class, true, (new DateTime())->format('H:i'), false));
 
 		// Run, but by mocking time here, we're setting last_run_time_start
 		// back two minutes, so we should be able to test the condition where
@@ -227,7 +225,7 @@ class JobRunnerTest extends \PHPUnit_Framework_TestCase
 		$mock->shouldNotReceive('addwork')->with([JobStub::class], JobStub::class, JobStub::class);
 		$mock->shouldNotReceive('process_work')->with(false, JobStub::class);
 
-		$jr->addJob(JobStub::class, ['enabled' => false]);
+		$jr->addJob(new JobDefinition(JobStub::class, false));
 		$jr->run();
 	}
 
@@ -244,13 +242,13 @@ class JobRunnerTest extends \PHPUnit_Framework_TestCase
 		$setUpForkingCalled = false;
 
 		$jr = new JobRunner();
-		$jr->addJob(JobStub::class, []);
+		$jr->addJob(new JobDefinition(JobStub::class));
 		$jr->processWork(array(JobStub::class));
 
 		// JobStub's start() method will toggle this.
 		$this->assertTrue($jobStarted);
 
-		$jr->addJob(ForkingJobStub::class, []);
+		$jr->addJob(new JobDefinition(ForkingJobStub::class));
 		$jr->processWork(array(ForkingJobStub::class));
 
 		// ForkingJobStub's setUpForking() method will toggle this.
@@ -259,7 +257,7 @@ class JobRunnerTest extends \PHPUnit_Framework_TestCase
 		// Try adding work for a non-existent job
 		$jr->processWork(array('Foo'));
 
-		$jr->addJob(ExceptionJobStub::class, []);
+		$jr->addJob(new JobDefinition(ExceptionJobStub::class));
 		$jr->processWork(array(ExceptionJobStub::class));
 	}
 
@@ -267,8 +265,8 @@ class JobRunnerTest extends \PHPUnit_Framework_TestCase
 	{
 		$jr = new JobRunner();
 
-		$jr->addJob(JobStub::class, []);
-		$this->assertInternalType('array', $jr->getJob(JobStub::class));
+		$jr->addJob(new JobDefinition(JobStub::class));
+		$this->assertInstanceOf(JobDefinition::class, $jr->getJob(JobStub::class));
 
 		// Trying to get a non-existent job should throw an exception
 		$this->setExpectedException(InvalidArgumentException::class);
@@ -284,12 +282,12 @@ class JobRunnerTest extends \PHPUnit_Framework_TestCase
 			1 => ['bucket' => JobStub::class],
 		])->once();
 
-		$jr->addJob(JobStub::class, []);
+		$jr->addJob(new JobDefinition(JobStub::class));
 		$jr->run();
 
 		$jr->parentChildExit(1);
 
-		$this->assertInternalType('int', $jr->getJob(JobStub::class)['last_run_time_finish']);
+		$this->assertInternalType('int', $jr->getJob(JobStub::class)->getLastRunTimeFinish());
 	}
 }
 
@@ -377,5 +375,29 @@ class ForkingJobStub extends ForkingJob
 	 */
 	public function cleanUp()
 	{
+	}
+}
+
+class ExtendingJobDefinition extends JobDefinition
+{
+	/**
+	 * @var int
+	 */
+	private $someOtherVar;
+
+	/**
+	 * @return int
+	 */
+	public function getSomeOtherVar()
+	{
+		return $this->someOtherVar;
+	}
+
+	/**
+	 * @param int $someOtherVar
+	 */
+	public function setSomeOtherVar($someOtherVar)
+	{
+		$this->someOtherVar = $someOtherVar;
 	}
 }

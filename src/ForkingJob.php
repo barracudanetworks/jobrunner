@@ -52,22 +52,7 @@ abstract class ForkingJob extends Job implements ForkingJobInterface
 			throw new Exception("createWork() may only return an array!");
 		}
 
-		// process all work sets
-		do
-		{
-			$this->fork_daemon->process_work(false);
-		} while ($this->fork_daemon->work_sets_count() > 0);
-
-		// wait for children to finish working
-		do
-		{
-			$children_remaining = $this->fork_daemon->children_running();
-			if ($children_remaining)
-			{
-				$this->logger->debug("Waiting for all children to finish, {$children_remaining} remaining");
-				sleep(1);
-			}
-		} while ($children_remaining);
+		$this->fork_daemon->process_work(true);
 
 		$this->logger->info("All children exited, fin!");
 	}

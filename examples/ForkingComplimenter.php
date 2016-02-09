@@ -10,7 +10,8 @@ class ForkingComplimenter extends ForkingJob
 	{
 		parent::__construct($logger);
 
-		$this->setItemCount(100);
+		$this->setItemCount(10);
+		$this->setNumChildren(5);
 	}
 
 	public function createWork()
@@ -18,7 +19,7 @@ class ForkingComplimenter extends ForkingJob
 		// Adding a bunch at once
 		$work = [];
 		$count = 1;
-		while ($count <= 500)
+		while ($count <= 100)
 		{
 			$work[] = "You have " . $count . " friends!";
 			$count++;
@@ -32,10 +33,14 @@ class ForkingComplimenter extends ForkingJob
 	public function processWork(array $work)
 	{
 		$pid = posix_getpid();
+		echo "[{$this->getShortName()}] pid: {$pid} | Has " . count($work) . " work units to work on" . PHP_EOL;
 
-		foreach ($work as $compliment)
-		{
-			echo "pid: {$pid} | " . $compliment . PHP_EOL;
-		}
+		// Simulate some work being done so you can see 5 different children spawn at a time
+		sleep(1);
+	}
+
+	public function cleanUp()
+	{
+		echo "[{$this->getShortName()}] Doing some post job clean up..." . PHP_EOL;
 	}
 }
