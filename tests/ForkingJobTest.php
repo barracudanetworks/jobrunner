@@ -71,6 +71,13 @@ class ForkingJobTest extends \PHPUnit_Framework_TestCase
 		$this->job->start();
 	}
 
+	public function testPrepareToFork()
+	{
+		// Just test that the method exists since forkdaemon will call it
+		// regardless.
+		$this->job->prepareToFork();
+	}
+
 	public function testCleanup()
 	{
 		$this->job->cleanUp();

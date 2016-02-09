@@ -21,4 +21,18 @@ class JobTest extends \PHPUnit_Framework_TestCase
 		$job->setLastRunTime($time);
 		$this->assertEquals($time, $job->getLastRunTime());
 	}
+
+	public function testGetName()
+	{
+		$job = new JobNameStub;
+
+		$this->assertEquals(JobNameStub::class, $job->getName());
+		$this->assertEquals('JobNameStub', $job->getShortName());
+	}
+}
+
+class JobNameStub extends Job {
+	public function start()
+	{
+	}
 }
