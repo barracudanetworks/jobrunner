@@ -42,13 +42,13 @@ class JobRunner
 	/**
 	 * Adds a job to the JobRunner instance.
 	 *
-	 * @param string         $class      Path to the Job class.
 	 * @param JobDefinition  $definition Job definition (e.g. interval).
 	 * @throws InvalidArgumentException If the given class does not subclass Job.
 	 * @return void
 	 */
-	public function addJob($class, JobDefinition $definition = null)
+	public function addJob(JobDefinition $definition)
 	{
+		$class = $definition->getClassName();
 		$reflection = new ReflectionClass($class);
 		if (!$reflection->isSubclassOf(Job::class))
 		{
@@ -63,17 +63,11 @@ class JobRunner
 			return;
 		}
 
-		if (is_null($definition))
+		// If we have a run_time and interval set, we will ignore the interval when checking if job can run.
+		if (!is_null($definition->getInterval()) && !is_null($definition->getRunTime()))
 		{
-			$definition = new JobDefinition();
-		}
-		else
-		{
-			// If we have a run_time and interval set, we will ignore the interval when checking if job can run.
-			if (!is_null($definition->getInterval()) && !is_null($definition->getRunTime()))
-			{
-				$this->logger->warning("Both run_time and interval are set for {$reflection->getShortName()} — prioritizing run_time");
-			}
+			$this->logger->warning("Both run_time and interval are set for {$reflection->getShortName()} — " .
+				"prioritizing run_time");
 		}
 
 		// Set internal definitions
@@ -101,7 +95,7 @@ class JobRunner
 		foreach ($this->jobs as $class => $definition)
 		{
 			// Check if it's time to run the job
-			if ($this->canJobRun($class, $this->jobs[$class]))
+			if ($this->canJobRun($class))
 			{
 				$this->queueJob($class);
 			}
@@ -218,11 +212,11 @@ class JobRunner
 	 * Returns true if a job can run, false otherwise.
 	 *
 	 * @param string         $class          The job to check.
-	 * @param JobDefinition  $job_definition The job definition.
 	 * @return bool
 	 */
-	protected function canJobRun($class, JobDefinition $job_definition)
+	protected function canJobRun($class)
 	{
+		$job_definition = $this->jobs[$class];
 		if ($job_definition->getEnabled() == false)
 		{
 			return false;
@@ -296,19 +290,18 @@ class JobRunner
 		// Bucket should be named after the job class
 		$class = $this->fork_daemon->getForkedChildren()[$pid]['bucket'];
 
-		$this->jobFinished($class, $this->jobs[$class]);
+		$this->jobFinished($class);
 	}
 
 	/**
 	 * Called whenever a job exits (according to fork_daemon).
 	 *
 	 * @param string        $class          The job that finished.
-	 * @param JobDefinition $job_definition The job definition.
 	 * @return void
 	 */
-	protected function jobFinished($class, JobDefinition $job_definition)
+	protected function jobFinished($class)
 	{
-		$job_definition->setLastRunTimeFinish(time());
+		$this->jobs[$class]->setLastRunTimeFinish(time());
 		$this->logger->info("Job {$this->jobs[$class]->getReflection()->getShortName()} finished");
 	}
 

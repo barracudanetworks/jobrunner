@@ -9,6 +9,11 @@ namespace Barracuda\JobRunner;
 class JobDefinition
 {
 	/**
+	 * @var string
+	 */
+	private $class_name;
+
+	/**
 	 * @var bool
 	 */
 	private $enabled;
@@ -45,17 +50,35 @@ class JobDefinition
 
 	/**
 	 * JobDefinition constructor.
+	 * @param string $class_name   The fully namespaced name of the class extending Job.
 	 * @param bool   $enabled      True if the job should run, false if not.
 	 * @param string $run_time     When the job should run in the format of 14:00 (2 pm every day).
 	 * @param int    $interval     Amount of seconds in between job runs. Default is every 6 hours.
 	 * @param int    $max_run_time The max amount of time the job should run for. Default is 2 days.
 	 */
-	public function __construct($enabled = true, $run_time = null, $interval = 21600, $max_run_time = 172800)
+	public function __construct($class_name, $enabled = true, $run_time = null, $interval = 21600, $max_run_time = 172800)
 	{
+		$this->class_name = $class_name;
 		$this->enabled = $enabled;
 		$this->run_time = $run_time;
 		$this->interval = $interval;
 		$this->max_run_time = $max_run_time;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getClassName()
+	{
+		return $this->class_name;
+	}
+
+	/**
+	 * @param string $class_name
+	 */
+	public function setClassName($class_name)
+	{
+		$this->class_name = $class_name;
 	}
 
 	/**

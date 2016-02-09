@@ -14,8 +14,8 @@ use \Barracuda\JobRunner\JobDefinition;
 
 // Instantiate the JobRunner
 $jobRunner = new \Barracuda\JobRunner\JobRunner();
-$jobRunner->addJob(\Barracuda\JobRunner\Examples\ForkingComplimenter::class, new JobDefinition(true, null, 5, null));
-$jobRunner->addJob(\Barracuda\JobRunner\Examples\Complainer::class, new JobDefinition(true, null, 3, null));
+$jobRunner->addJob(new JobDefinition(\Barracuda\JobRunner\Examples\ForkingComplimenter::class, true, null, 5, null));
+$jobRunner->addJob(new JobDefinition(\Barracuda\JobRunner\Examples\Complainer::class, true, null, 3, null));
 
 // Have the run method live inside of a while (true) daemonize the process
 while (true)
