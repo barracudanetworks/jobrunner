@@ -80,7 +80,8 @@ class JobRunner
 		$this->jobs[$class] = $definition;
 		$this->createJobBuckets($class);
 
-		$this->logger->info("Registered job {$reflection->getShortName()}");
+		$this->logger->info("Registered job {$reflection->getShortName()} -- " .
+			($definition->getEnabled() ? "enabled" : "disabled"));
 	}
 
 	/**
