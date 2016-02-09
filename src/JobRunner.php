@@ -66,6 +66,7 @@ class JobRunner
 		// If we have a run_time and interval set, we will ignore the interval when checking if job can run.
 		if (!is_null($definition->getInterval()) && !is_null($definition->getRunTime()))
 		{
+			$definition->setInterval(null);
 			$this->logger->warning("Both run_time and interval are set for {$reflection->getShortName()} — " .
 				"prioritizing run_time");
 		}

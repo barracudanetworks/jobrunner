@@ -99,7 +99,7 @@ class JobRunnerTest extends \PHPUnit_Framework_TestCase
 
 		// Try again, setting some definition values
 		$jr = new JobRunner();
-		$jd = new JobDefinition(JobStub::class, false, '12:00', 3600);
+		$jd = new JobDefinition(JobStub::class, false, null, 3600);
 
 		// should not be retained
 		$jd->setLastRunTimeStart(time());
@@ -112,12 +112,24 @@ class JobRunnerTest extends \PHPUnit_Framework_TestCase
 
 		$this->assertFalse($job->getEnabled());
 		$this->assertEquals(3600, $job->getInterval());
-		$this->assertEquals('12:00', $job->getRunTime());
 
 		// Should not retain given values
 		$this->assertEmpty($job->getLastRunTimeStart());
 		$this->assertEmpty($job->getLastRunTimeFinish());
 		$this->assertInstanceOf(ReflectionClass::class, $job->getReflection());
+
+		// Add a job with a run_time and interval set to see that interval is ignored and set back to null
+		$definition = new JobDefinition(JobStub::class, true, '12:00', 5);
+		$jr = new JobRunner();
+
+		$jr->addJob($definition);
+		$updated_jd = $jr->getJob($definition->getClassName());
+		$this->assertNull($updated_jd->getInterval());
+
+		// Test adding a class extending JobDefinition
+		$jr = new JobRunner();
+		$jr->addJob(new ExtendingJobDefinition(JobStub::class));
+		$this->assertInstanceOf(JobDefinition::class, $jr->getJob(JobStub::class));
 
 		// Adding a non-Job class should throw an exception
 		$this->setExpectedException(Exception::class);
@@ -125,8 +137,6 @@ class JobRunnerTest extends \PHPUnit_Framework_TestCase
 		$jr = new JobRunner();
 		$jr->addJob(new JobDefinition(stdClass::class));
 
-		// Test adding a class extending JobDefinition and throwing exception for not extending Job class
-		$jr->addJob(new ExtendingJobDefinition(self::class));
 	}
 
 	/**
