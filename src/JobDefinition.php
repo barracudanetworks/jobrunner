@@ -95,6 +95,7 @@ class JobDefinition
 	public function setEnabled($enabled)
 	{
 		$this->enabled = $enabled;
+		return $this;
 	}
 
 	/**
@@ -111,6 +112,7 @@ class JobDefinition
 	public function setRunTime($run_time)
 	{
 		$this->run_time = $run_time;
+		return $this;
 	}
 
 	/**
@@ -127,6 +129,7 @@ class JobDefinition
 	public function setInterval($interval)
 	{
 		$this->interval = $interval;
+		return $this;
 	}
 
 	/**
@@ -143,6 +146,7 @@ class JobDefinition
 	public function setMaxRunTime($max_run_time)
 	{
 		$this->max_run_time = $max_run_time;
+		return $this;
 	}
 
 	/**
