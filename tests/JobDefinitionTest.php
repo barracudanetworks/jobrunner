@@ -33,16 +33,20 @@ class JobDefinitionTest extends \PHPUnit_Framework_TestCase
 		$jd->setClassName($expected_string);
 		$this->assertEquals($expected_string, $jd->getClassName());
 
-		$jd->setEnabled(false);
+		$jd2 = $jd->setEnabled(false);
 		$this->assertEquals(false, $jd->getEnabled());
+		$this->assertSame($jd, $jd2);
 
-		$jd->setMaxRunTime($expected_int);
+		$jd2 = $jd->setMaxRunTime($expected_int);
 		$this->assertEquals($expected_int, $jd->getMaxRunTime());
+		$this->assertSame($jd, $jd2);
 
-		$jd->setRunTime($expected_string);
+		$jd2 = $jd->setRunTime($expected_string);
 		$this->assertEquals($expected_string, $jd->getRunTime());
+		$this->assertSame($jd, $jd2);
 
-		$jd->setInterval($expected_int);
+		$jd2 = $jd->setInterval($expected_int);
 		$this->assertEquals($expected_int, $jd->getInterval());
+		$this->assertSame($jd, $jd2);
 	}
 }
