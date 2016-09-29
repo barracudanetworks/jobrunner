@@ -24,7 +24,7 @@ class JobRunner
 	/**
 	 * @var \fork_daemon
 	 */
-	protected $fork_daemon;
+	private $fork_daemon;
 
 	/**
 	 * @param \fork_daemon    $fork_daemon Instance of ForkDaemon.
