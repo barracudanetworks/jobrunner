@@ -165,4 +165,12 @@ abstract class ForkingJob extends Job implements ForkingJobInterface
 	{
 		return $this->item_count;
 	}
+
+	/**
+	 * @return \fork_daemon
+	 */
+	public function getForkDaemon()
+	{
+		return $this->fork_daemon;
+	}
 }
