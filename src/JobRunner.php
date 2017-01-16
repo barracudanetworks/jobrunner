@@ -152,7 +152,8 @@ class JobRunner
 			if ($job instanceof Job)
 			{
 				// Pass relevant info to the job from the parent before calling start
-				$job->setLastRunTime($this->jobs[$class]->getLastRunTimeFinish());
+				$job->setLastFinishRunTime($this->jobs[$class]->getLastRunTimeFinish());
+				$job->setLastStartRunTime($this->jobs[$class]->getLastRunTimeStart());
 
 				$job->start();
 			}

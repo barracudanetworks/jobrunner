@@ -16,9 +16,14 @@ abstract class Job implements JobInterface
 	protected $logger;
 
 	/**
-	 * @var int The last time the module ran
+	 * @var int The last time the job finished running
 	 */
-	private $last_run_time;
+	private $last_finish_runtime;
+
+	/**
+	 * @var int The last time the job started running
+	 */
+	private $last_start_runtime;
 
 	/**
 	 * @param LoggerInterface $logger PSR-3 logger object.
@@ -37,18 +42,35 @@ abstract class Job implements JobInterface
 	/**
 	 * @return int
 	 */
-	public function getLastRunTime()
+	public function getLastFinishRunTime()
 	{
-		return $this->last_run_time;
+		return $this->last_finish_runtime;
 	}
 
 	/**
 	 * @param int $lastRunTime
 	 * @return void
 	 */
-	public function setLastRunTime($lastRunTime)
+	public function setLastFinishRunTime($lastRunTime)
 	{
-		$this->last_run_time = $lastRunTime;
+		$this->last_finish_runtime = $lastRunTime;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getLastStartRunTime()
+	{
+		return $this->last_start_runtime;
+	}
+
+	/**
+	 * @param int $lastRunTime
+	 * @return void
+	 */
+	public function setLastStartRunTime($lastRunTime)
+	{
+		$this->last_start_runtime = $lastRunTime;
 	}
 
 	/**
