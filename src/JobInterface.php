@@ -8,9 +8,13 @@ interface JobInterface
 {
 	public function start();
 
-	public function getLastRunTime();
+	public function getLastFinishRunTime();
 
-	public function setLastRunTime($lastRunTime);
+	public function getLastStartRunTime();
+
+	public function setLastFinishRunTime($lastRunTime);
+
+	public function setLastStartRunTime($lastRunTime);
 
 	public function getLogger();
 

@@ -13,13 +13,22 @@ class JobTest extends \PHPUnit_Framework_TestCase
 		$this->assertInstanceOf(LoggerInterface::class, $job->getLogger());
 	}
 
-	public function testSetLastRunTime()
+	public function testSetLastFinishRunTime()
 	{
 		$job = $this->getMockForAbstractClass(Job::class);
 
 		$time = time();
-		$job->setLastRunTime($time);
-		$this->assertEquals($time, $job->getLastRunTime());
+		$job->setLastFinishRunTime($time);
+		$this->assertEquals($time, $job->getLastFinishRunTime());
+	}
+
+	public function testSetLastStartRunTime()
+	{
+		$job = $this->getMockForAbstractClass(Job::class);
+
+		$time = time();
+		$job->setLastStartRunTime($time);
+		$this->assertEquals($time, $job->getLastStartRunTime());
 	}
 
 	public function testGetName()
