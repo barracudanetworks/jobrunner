@@ -8,7 +8,7 @@
   "require": {
     "php": ">=5.3.0",
     "psr/log": "1.0.0",
-    "barracudanetworks/forkdaemon-php": "1.0.*"
+    "barracudanetworks/forkdaemon-php": "^1.0.10"
   },
   "autoload": {
     "psr-4": {
