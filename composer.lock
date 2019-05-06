@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "df32b76af4749ead759ac4aab317de43",
+    "content-hash": "35cdf0fb98214d8a48253d38adb6e99d",
     "packages": [
         {
             "name": "barracudanetworks/forkdaemon-php",
-            "version": "v2.0.0",
+            "version": "v1.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/barracudanetworks/forkdaemon-php.git",
-                "reference": "1678600bc944776b1f9451efa12d137646b37b3f"
+                "reference": "16c068748ce170ab167f288b116ac0d105f6185d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/barracudanetworks/forkdaemon-php/zipball/1678600bc944776b1f9451efa12d137646b37b3f",
-                "reference": "1678600bc944776b1f9451efa12d137646b37b3f",
+                "url": "https://api.github.com/repos/barracudanetworks/forkdaemon-php/zipball/16c068748ce170ab167f288b116ac0d105f6185d",
+                "reference": "16c068748ce170ab167f288b116ac0d105f6185d",
                 "shasum": ""
             },
             "require": {
@@ -40,7 +40,7 @@
                 "forking",
                 "php"
             ],
-            "time": "2019-05-03T14:49:38+00:00"
+            "time": "2018-09-11T14:29:03+00:00"
         },
         {
             "name": "psr/log",
